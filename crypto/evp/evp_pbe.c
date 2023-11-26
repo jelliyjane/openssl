@@ -264,7 +264,7 @@ int EVP_PBE_find_ex(int type, int pbe_nid, int *pcnid, int *pmnid,
         i = sk_EVP_PBE_CTL_find(pbe_algs, &pbelu);
         pbetmp = sk_EVP_PBE_CTL_value(pbe_algs, i);
     }
-    if (pbetmp == NULL) {
+    if (pbetmp == NULL){
         pbetmp = OBJ_bsearch_pbe2(&pbelu, builtin_pbe, OSSL_NELEM(builtin_pbe));
     }
     if (pbetmp == NULL)
@@ -307,7 +307,7 @@ int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num)
     tpbe = builtin_pbe + num;
     if (ptype)
         *ptype = tpbe->pbe_type;
-    if (ppbe_nid)
+    if(ppbe_nid)
         *ppbe_nid = tpbe->pbe_nid;
     return 1;
 }

@@ -79,6 +79,22 @@ typedef enum {
     CON_FUNC_DONT_SEND
 } CON_FUNC_RETURN;
 
+typedef enum {
+    /* The enc_write_ctx can be used normally */
+    ENC_WRITE_STATE_VALID,
+    /* The enc_write_ctx cannot be used */
+    ENC_WRITE_STATE_INVALID,
+    /* Write alerts in plaintext, but otherwise use the enc_write_ctx */
+    ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
+} ENC_WRITE_STATES;
+
+typedef enum {
+    /* The enc_read_ctx can be used normally */
+    ENC_READ_STATE_VALID,
+    /* We may receive encrypted or plaintext alerts */
+    ENC_READ_STATE_ALLOW_PLAIN_ALERTS
+} ENC_READ_STATES;
+
 typedef int (*ossl_statem_mutate_handshake_cb)(const unsigned char *msgin,
                                                size_t inlen,
                                                unsigned char **msgout,
@@ -108,6 +124,8 @@ struct ossl_statem_st {
     int read_state_first_init;
     /* true when we are actually in SSL_accept() or SSL_connect() */
     int in_handshake;
+    ENC_WRITE_STATES enc_write_state;
+    ENC_READ_STATES enc_read_state;
     /*
      * True when are processing a "real" handshake that needs cleaning up (not
      * just a HelloRequest or similar).
@@ -136,6 +154,8 @@ typedef struct ssl_connection_st SSL_CONNECTION;
 
 __owur int ossl_statem_accept(SSL *s);
 __owur int ossl_statem_connect(SSL *s);
+__owur int ossl_statem_connect_reduce(SSL *s);
+__owur int ossl_statem_accept_reduce(SSL *s);
 OSSL_HANDSHAKE_STATE ossl_statem_get_state(SSL_CONNECTION *s);
 void ossl_statem_clear(SSL_CONNECTION *s);
 void ossl_statem_set_renegotiate(SSL_CONNECTION *s);

@@ -21,6 +21,7 @@
 #include <openssl/x509.h>
 #include <openssl/trace.h>
 #include <openssl/encoder.h>
+#include <time.h>
 
 /*
  * Map error codes to TLS/SSL alart types.
@@ -58,6 +59,7 @@ int ossl_statem_set_mutator(SSL *s,
  * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
  * SSL3_RT_CHANGE_CIPHER_SPEC)
  */
+/*
 int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
 {
     int ret;
@@ -67,7 +69,7 @@ int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
     /*
      * If we're running the test suite then we may need to mutate the message
      * we've been asked to write. Does not happen in normal operation.
-     */
+     
     if (s->statem.mutate_handshake_cb != NULL
             && !s->statem.write_in_progress
             && type == SSL3_RT_HANDSHAKE
@@ -95,6 +97,70 @@ int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
     if (ret <= 0)
         return -1;
     if (type == SSL3_RT_HANDSHAKE)
+        
+         * should not be done for 'Hello Request's, but in that case we'll
+         * ignore the result anyway
+         * TLS1.3 KeyUpdate and NewSessionTicket do not need to be added
+         
+        if (!SSL_CONNECTION_IS_TLS13(s)
+            || (s->statem.hand_state != TLS_ST_SW_SESSION_TICKET
+                                 && s->statem.hand_state != TLS_ST_CW_KEY_UPDATE
+                                 && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE))
+            if (!ssl3_finish_mac(s,
+                                 (unsigned char *)&s->init_buf->data[s->init_off],
+                                 written))
+                return -1;
+    if (written == s->init_num) {
+        s->statem.write_in_progress = 0;
+        if (s->msg_callback)
+            s->msg_callback(1, s->version, type, s->init_buf->data,
+                            (size_t)(s->init_off + s->init_num), ssl,
+                            s->msg_callback_arg);
+        return 1;
+    }
+    s->init_off += written;
+    s->init_num -= written;
+    return 0;
+}
+*/
+int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
+{
+    int ret;
+    size_t written = 0;
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+    /*
+     * If we're running the test suite then we may need to mutate the message
+     * we've been asked to write. Does not happen in normal operation.
+     
+    if (s->statem.mutate_handshake_cb != NULL
+            && !s->statem.write_in_progress
+            && type == SSL3_RT_HANDSHAKE
+            && s->init_num >= SSL3_HM_HEADER_LENGTH) {
+        unsigned char *msg;
+        size_t msglen;
+
+        if (!s->statem.mutate_handshake_cb((unsigned char *)s->init_buf->data,
+                                           s->init_num,
+                                           &msg, &msglen,
+                                           s->statem.mutatearg))
+            return -1;
+        if (msglen < SSL3_HM_HEADER_LENGTH
+                || !BUF_MEM_grow(s->init_buf, msglen))
+            return -1;
+        memcpy(s->init_buf->data, msg, msglen);
+        s->init_num = msglen;
+        s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
+        s->statem.finish_mutate_handshake_cb(s->statem.mutatearg);
+        s->statem.write_in_progress = 1;
+    }
+    */
+
+    ret = ssl3_write_bytes(ssl, type, &s->init_buf->data[s->init_off],
+                           s->init_num, &written);
+    if (ret <= 0)
+        return -1;
+    if (type == SSL3_RT_HANDSHAKE)
         /*
          * should not be done for 'Hello Request's, but in that case we'll
          * ignore the result anyway
@@ -109,7 +175,7 @@ int ssl3_do_write(SSL_CONNECTION *s, uint8_t type)
                                  written))
                 return -1;
     if (written == s->init_num) {
-        s->statem.write_in_progress = 0;
+        //s->statem.write_in_progress = 0;
         if (s->msg_callback)
             s->msg_callback(1, s->version, type, s->init_buf->data,
                             (size_t)(s->init_off + s->init_num), ssl,
@@ -312,6 +378,169 @@ static int get_cert_verify_tbs_data(SSL_CONNECTION *s, unsigned char *tls13tbs,
 
     return 1;
 }
+
+// Verify part
+
+RSA* createPublicRSA(char* key) {
+    RSA *rsa = NULL;
+    BIO *keybio;
+    keybio = BIO_new_mem_buf((void*)key, -1);
+    if (keybio==NULL) {
+        return 0;
+    }
+    rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa,NULL, NULL);
+    return rsa;
+}
+
+int RSAVerifySignature( RSA* rsa,
+                        unsigned char* MsgHash,
+                        size_t MsgHashLen,
+                        const char* Msg,
+                        size_t MsgLen,
+                        int* Authentic) {
+    *Authentic = 0;
+    EVP_PKEY* pubKey  = EVP_PKEY_new();
+    EVP_PKEY_assign_RSA(pubKey, rsa);
+    EVP_MD_CTX* m_RSAVerifyCtx = EVP_MD_CTX_create();
+
+    if (EVP_DigestVerifyInit(m_RSAVerifyCtx,NULL, EVP_sha256(),NULL,pubKey)<=0) {
+        return 0;
+    }
+    if (EVP_DigestVerifyUpdate(m_RSAVerifyCtx, Msg, MsgLen) <= 0) {
+        return 0;
+    }
+    int AuthStatus = EVP_DigestVerifyFinal(m_RSAVerifyCtx, MsgHash, MsgHashLen);
+    if (AuthStatus==1) {
+        *Authentic = 1;
+        //        EVP_MD_CTX_cleanup(m_RSAVerifyCtx);
+        return 1;
+    } else if(AuthStatus==0){
+        *Authentic = 0;
+        //        EVP_MD_CTX_cleanup(m_RSAVerifyCtx);
+        return 1;
+    } else{
+        *Authentic = 0;
+        //        EVP_MD_CTX_cleanup(m_RSAVerifyCtx);
+        return 1;
+    }
+}
+
+size_t calcDecodeLength(const char* b64input) {
+    size_t len = strlen(b64input), padding = 0;
+
+    if (b64input[len-1] == '=' && b64input[len-2] == '=') //last two chars are =
+        padding = 2;
+    else if (b64input[len-1] == '=') //last char is =
+        padding = 1;
+    return (len*3)/4 - padding;
+}
+
+void Base64Decode(const char* b64message, unsigned char** buffer, size_t* length) {
+    BIO *bio, *b64;
+
+    int decodeLen = calcDecodeLength(b64message);
+    *buffer = (unsigned char*)malloc(decodeLen + 1);
+    (*buffer)[decodeLen] = '\0';
+
+    bio = BIO_new_mem_buf(b64message, -1);
+    b64 = BIO_new(BIO_f_base64());
+    bio = BIO_push(b64, bio);
+
+    *length = BIO_read(bio, *buffer, strlen(b64message));
+    BIO_free_all(bio);
+}
+
+//ZTLS function
+int verifySignature(char* publicKey, char* plainText, char* signatureBase64) {
+    RSA* publicRSA = createPublicRSA(publicKey);
+    unsigned char* encMessage;
+    size_t encMessageLength;
+    int authentic;
+    Base64Decode(signatureBase64, &encMessage, &encMessageLength);
+    int result = RSAVerifySignature(publicRSA, encMessage, encMessageLength, plainText, strlen(plainText), &authentic);
+    return result & authentic;
+}
+//ZTLS function
+int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
+                              const unsigned char *context, size_t contextlen){
+    printf("verify the Server's Certificate ");
+    struct timespec begin;
+    clock_gettime(CLOCK_MONOTONIC, &begin);
+    printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
+
+    X509 *x;
+    BIO* outbio;
+    unsigned char pubKey[contextlen];
+
+    STACK_OF(X509) *r;
+    if (s == NULL){
+        printf("s is null\n");
+        return NULL;
+    }
+    if (s->session == NULL){
+        printf("s->session is null\n");
+        r = NULL;
+    }
+    else
+        r = s->session->peer_chain;
+
+    x = sk_X509_value(r, 0);
+
+    EVP_PKEY* pkey = X509_get0_pubkey(x);
+    const SSL_CERT_LOOKUP *clu;
+    size_t certidx;
+
+    if (pkey == NULL || EVP_PKEY_missing_parameters(pkey)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
+        printf("error\n");
+    }
+
+    if ((clu = ssl_cert_lookup_by_pkey(pkey, &certidx, s)) == NULL) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+        printf("error\n");
+    }
+    /*
+     * Check certificate type is consistent with ciphersuite. For TLS 1.3
+     * skip check since TLS 1.3 ciphersuites can be used with any certificate
+     * type.
+     */
+    X509_free(s->session->peer);
+    X509_up_ref(x);
+    s->session->peer = x;
+    s->session->verify_result = s->verify_result;
+
+    X509 *peer;
+    pkey = NULL;
+
+    peer = s->session->peer;
+    pkey = X509_get0_pubkey(peer);
+    if (pkey == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        printf("error\n");
+    }
+    outbio  = BIO_new(BIO_s_mem());
+    PEM_write_bio_PUBKEY( outbio, pkey );
+    BIO_read( outbio, pubKey , contextlen );
+
+    int authentic = verifySignature((char*)pubKey, (char*)out, (char*)context);
+
+    if ( authentic ) {
+        printf("Authentic ");
+        clock_gettime(CLOCK_MONOTONIC, &begin);
+        printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
+
+    } else {
+        printf("Not Authentic ");
+        clock_gettime(CLOCK_MONOTONIC, &begin);
+        printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
+    }
+
+    return 0;
+}
+
+
+
 
 CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
 {

@@ -46,6 +46,35 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
         ERR_raise(ERR_LIB_SSL, rv);
         return 0;
     }
+    if(sc->early_data_state == SSL_DNS_CCS){
+        printf("load the Server's Certificate ");
+        struct timespec begin;
+        clock_gettime(CLOCK_MONOTONIC, &begin);
+        printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
+        STACK_OF(X509)* tmp;
+        sc->session = SSL_SESSION_new();
+
+        sc->session->peer_chain = (STACK_OF(X509)*)sk_X509_new_null();
+        if (sc->session->peer_chain == NULL) {
+            SSLfatal(SSL_CONNECTION_GET_SSL(sc), SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        }
+        if (x == NULL) {
+            SSLfatal(SSL_CONNECTION_GET_SSL(sc), SSL_AD_DECODE_ERROR, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        }
+
+        if (!sk_X509_push(sc->session->peer_chain, x)) {
+            SSLfatal(SSL_CONNECTION_GET_SSL(sc), SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        }
+        if (ssl_verify_cert_chain(sc, sc->session->peer_chain) <= 0) {
+            printf("not correct cert chain ");
+            clock_gettime(CLOCK_MONOTONIC, &begin);
+            printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
+        }else
+            printf("authenticate cert chain");
+            clock_gettime(CLOCK_MONOTONIC, &begin);
+            printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
+    }
 
     return ssl_set_cert(sc->cert, x, SSL_CONNECTION_GET_CTX(sc));
 }
@@ -127,16 +156,19 @@ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, SSL_CTX *ctx)
 {
     size_t i;
+    printf("here0\n");
 
     if (ssl_cert_lookup_by_pkey(pkey, &i, ctx) == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+        printf("here1\n");
         return 0;
     }
 
     if (c->pkeys[i].x509 != NULL
             && !X509_check_private_key(c->pkeys[i].x509, pkey))
+        printf("here2\n");
         return 0;
-
+    printf("here3\n");
     EVP_PKEY_free(c->pkeys[i].privatekey);
     EVP_PKEY_up_ref(pkey);
     c->pkeys[i].privatekey = pkey;
@@ -149,14 +181,23 @@ int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey)
     int ret;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
-    if (sc == NULL)
+    if (sc == NULL){
+        printf("no sc\n");
         return 0;
+    }
 
     if (pkey == NULL) {
+        printf("no peky\n");
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    ret = ssl_set_pkey(sc->cert, pkey, SSL_CONNECTION_GET_CTX(sc));
+    if(!sc->server){// to give the client keyshare_info //ZTLS
+        sc->s3.peer_tmp = pkey;
+        return 1;
+    }else{
+        printf("ssl_set_pkey is running\n");
+        ret = ssl_set_pkey(sc->cert, pkey, SSL_CONNECTION_GET_CTX(sc));
+    }
     return ret;
 }
 

@@ -22,11 +22,13 @@
 #include <openssl/ct.h>
 #include <openssl/trace.h>
 #include <openssl/core_names.h>
+#include <ssl/statem/statem_local.h>
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "internal/refcount.h"
 #include "internal/ktls.h"
 #include "quic/quic_local.h"
+#include <time.h>
 
 static int ssl_undefined_function_3(SSL_CONNECTION *sc, unsigned char *r,
                                     unsigned char *s, size_t t, size_t *u)
@@ -1701,38 +1703,36 @@ int SSL_set_fd(SSL *s, int fd)
 
 int SSL_set_wfd(SSL *s, int fd)
 {
-    BIO *rbio = SSL_get_rbio(s);
-    int desired_type = IS_QUIC(s) ? BIO_TYPE_DGRAM : BIO_TYPE_SOCKET;
+//    BIO *rbio = SSL_get_rbio(s);
+//
+//    if (rbio == NULL || BIO_method_type(rbio) != BIO_TYPE_SOCKET
+//        || (int)BIO_get_fd(rbio, NULL) != fd) {
+//        BIO *bio = BIO_new(BIO_s_socket());
+//
+//        if (bio == NULL) {
+//            ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
+//            return 0;
+//        }
+//        BIO_set_fd(bio, fd, BIO_NOCLOSE);
+//        SSL_set0_wbio(s, bio);
+//#ifndef OPENSSL_NO_KTLS
+//        /*
+//         * The new socket is created successfully regardless of ktls_enable.
+//         * ktls_enable doesn't change any functionality of the socket, except
+//         * changing the setsockopt to enable the processing of ktls_start.
+//         * Thus, it is not a problem to call it for non-TLS sockets.
+//         */
+//        ktls_enable(fd);
+//#endif /* OPENSSL_NO_KTLS */
+//    } else {
+//        BIO_up_ref(rbio);
+//        SSL_set0_wbio(s, rbio);
+//    }
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    if(fd == 1)
+        sc->early_data_state = SSL_DNS_CCS;
 
-    if (s->type == SSL_TYPE_QUIC_XSO) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_CONN_USE_ONLY);
-        return 0;
-    }
-
-    if (rbio == NULL || BIO_method_type(rbio) != desired_type
-        || (int)BIO_get_fd(rbio, NULL) != fd) {
-        BIO *bio = BIO_new(fd_method(s));
-
-        if (bio == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
-            return 0;
-        }
-        BIO_set_fd(bio, fd, BIO_NOCLOSE);
-        SSL_set0_wbio(s, bio);
-#ifndef OPENSSL_NO_KTLS
-        /*
-         * The new socket is created successfully regardless of ktls_enable.
-         * ktls_enable doesn't change any functionality of the socket, except
-         * changing the setsockopt to enable the processing of ktls_start.
-         * Thus, it is not a problem to call it for non-TLS sockets.
-         */
-        ktls_enable(fd);
-#endif /* OPENSSL_NO_KTLS */
-    } else {
-        BIO_up_ref(rbio);
-        SSL_set0_wbio(s, rbio);
-    }
-    return 1;
+    return 2;
 }
 
 int SSL_set_rfd(SSL *s, int fd)
@@ -3760,17 +3760,22 @@ int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                int use_context)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-
+    printf("export keying material sc->early_data_state:%d\n", sc->early_data_state);
     if (sc == NULL)
         return -1;
+    if(sc->early_data_state == SSL_DNS_CCS){// if ZTLS
+        // load session->peer
+        early_process_cert_verify(sc, out, context, contextlen);
+    }else{
 
-    if (sc->session == NULL
-        || (sc->version < TLS1_VERSION && sc->version != DTLS1_BAD_VER))
-        return -1;
+        if (sc->session == NULL
+            || (sc->version < TLS1_VERSION && sc->version != DTLS1_BAD_VER))
+            return -1;
 
-    return s->method->ssl3_enc->export_keying_material(sc, out, olen, label,
-                                                       llen, context,
-                                                       contextlen, use_context);
+        return s->method->ssl3_enc->export_keying_material(sc, out, olen, label,
+                                                           llen, context,
+                                                           contextlen, use_context);
+    }
 }
 
 int SSL_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
@@ -4703,6 +4708,14 @@ static int ssl_do_handshake_intern(void *vargs)
 int SSL_do_handshake(SSL *s)
 {
     int ret = 1;
+
+    int dns = 1;
+    if(dns){
+        return SSL_do_handshake_reduce(s);
+    }
+    printf("==============================================\n");
+    printf("start do handshake\n");
+    printf("==============================================\n");
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
 #ifndef OPENSSL_NO_QUIC
@@ -4733,6 +4746,43 @@ int SSL_do_handshake(SSL *s)
     }
     return ret;
 }
+int SSL_do_handshake_reduce(SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    struct timespec begin;
+    clock_gettime(CLOCK_MONOTONIC, &begin);
+    printf("==============================================\n");
+    printf("start do handshake reduce");
+    printf(" : %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
+    printf("==============================================\n");
+
+    int ret = 1;
+
+    if (sc->handshake_func == NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_CONNECTION_TYPE_NOT_SET);
+        return -1;
+    }
+
+    ossl_statem_check_finish_init(sc, -1);
+
+    s->method->ssl_renegotiate_check(s, 0);
+
+    if (SSL_in_init(s) || SSL_in_before(s)) {
+
+        if((sc->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
+            struct ssl_async_args args;
+
+            args.s = s;
+
+            ret = ssl_start_async_job(s, &args, ssl_do_handshake_intern);
+        }else{
+            if(sc->server)   sc->handshake_func = ossl_statem_accept_reduce;
+            else    sc->handshake_func = ossl_statem_connect_reduce;
+            ret = sc->handshake_func(s);
+        }
+    }
+    return ret;
+}
 
 void SSL_set_accept_state(SSL *s)
 {
@@ -4751,6 +4801,7 @@ void SSL_set_accept_state(SSL *s)
     sc->handshake_func = s->method->ssl_accept;
     /* Ignore return value. Its a void public API function */
     clear_record_layer(sc);
+    //clear_ciphers(sc);
 }
 
 void SSL_set_connect_state(SSL *s)
@@ -4770,6 +4821,7 @@ void SSL_set_connect_state(SSL *s)
     sc->handshake_func = s->method->ssl_connect;
     /* Ignore return value. Its a void public API function */
     clear_record_layer(sc);
+    //clear_ciphers(sc);
 }
 
 int ssl_undefined_function(SSL *s)

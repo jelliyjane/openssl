@@ -87,6 +87,11 @@ WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst);
 WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst);
 int ossl_statem_client_construct_message(SSL_CONNECTION *s,
                                          confunc_f *confunc, int *mt);
+int ossl_statem_client_read_transition_reduce(SSL_CONNECTION *s, int mt);
+WRITE_TRAN ossl_statem_client_write_transition_reduce(SSL_CONNECTION *s);
+WORK_STATE ossl_statem_client_pre_work_reduce(SSL_CONNECTION *s, WORK_STATE wst);
+WORK_STATE ossl_statem_client_post_work_reduce(SSL_CONNECTION *s, WORK_STATE wst);
+
 size_t ossl_statem_client_max_message_size(SSL_CONNECTION *s);
 MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL_CONNECTION *s,
                                                       PACKET *pkt);
@@ -102,11 +107,19 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst);
 WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst);
 int ossl_statem_server_construct_message(SSL_CONNECTION *s,
                                          confunc_f *confunc,int *mt);
+int ossl_statem_server_read_transition_reduce(SSL_CONNECTION *s, int mt);
+WRITE_TRAN ossl_statem_server_write_transition_reduce(SSL_CONNECTION *s);
+WORK_STATE ossl_statem_server_pre_work_reduce(SSL_CONNECTION *s, WORK_STATE wst);
+WORK_STATE ossl_statem_server_post_work_reduce(SSL_CONNECTION *s, WORK_STATE wst);
+
 size_t ossl_statem_server_max_message_size(SSL_CONNECTION *s);
 MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL_CONNECTION *s,
                                                       PACKET *pkt);
+MSG_PROCESS_RETURN ossl_statem_server_process_message_reduce(SSL_CONNECTION *s, PACKET *pkt);
+
 WORK_STATE ossl_statem_server_post_process_message(SSL_CONNECTION *s,
                                                    WORK_STATE wst);
+WORK_STATE ossl_statem_server_post_process_message_reduce(SSL_CONNECTION *s, WORK_STATE wst);
 
 /* Functions for getting new message data */
 __owur int tls_get_message_header(SSL_CONNECTION *s, int *mt);
@@ -155,6 +168,9 @@ __owur MSG_PROCESS_RETURN tls_process_server_done(SSL_CONNECTION *s,
                                                   PACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s,
                                                  WPACKET *pkt);
+__owur int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
+                                     const unsigned char *context, size_t contextlen);
+
 __owur WORK_STATE tls_prepare_client_certificate(SSL_CONNECTION *s,
                                                  WORK_STATE wst);
 __owur CON_FUNC_RETURN tls_construct_client_certificate(SSL_CONNECTION *s,
@@ -202,6 +218,8 @@ __owur MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s,
                                                    PACKET *pkt);
 __owur WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s,
                                                 WORK_STATE wst);
+__owur WORK_STATE tls_post_process_client_hello_reduce(SSL_CONNECTION *s, WORK_STATE wst);
+
 __owur CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s,
                                                   WPACKET *pkt);
 __owur CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
