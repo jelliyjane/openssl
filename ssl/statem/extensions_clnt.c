@@ -655,6 +655,67 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
 }
 #endif
 
+#ifndef OPENSSL_NO_TLS1_3
+static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
+{
+    unsigned char *encoded_point = NULL;
+    EVP_PKEY *key_share_key = NULL;
+    size_t encodedlen;
+
+    if (s->s3.tmp.pkey != NULL) {
+        // NOT
+//        Log("start\n");
+        if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        /*
+         * Could happen if we got an HRR that wasn't requesting a new key_share
+         */
+        key_share_key = s->s3.tmp.pkey;
+    } else {
+        // IMPLEMENT
+//        Log("start tmp NULL\n");
+        key_share_key = ssl_generate_pkey_group(s, curve_id);
+        if (key_share_key == NULL) {
+            /* SSLfatal() already called */
+            return 0;
+        }
+    }
+
+    /* Encode the public key. */
+    encodedlen = EVP_PKEY_get1_encoded_public_key(key_share_key,
+                                                  &encoded_point);
+    if (encodedlen == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    /* Create KeyShareEntry */
+    if (!WPACKET_put_bytes_u16(pkt, curve_id)
+    || !WPACKET_sub_memcpy_u16(pkt, encoded_point, encodedlen)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /*
+     * When changing to send more than one key_share we're
+     * going to need to be able to save more than one EVP_PKEY. For now
+     * we reuse the existing tmp.pkey
+     */
+    s->s3.tmp.pkey = key_share_key;
+    s->s3.group_id = curve_id;
+    OPENSSL_free(encoded_point);
+
+    return 1;
+    err:
+    if (s->s3.tmp.pkey == NULL)
+        EVP_PKEY_free(key_share_key);
+    OPENSSL_free(encoded_point);
+    return 0;
+}
+#endif
+
 EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
                                         unsigned int context, X509 *x,
                                         size_t chainidx)
@@ -687,10 +748,6 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
             if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
                 continue;
 
-            if (!tls_valid_group(s, pgroups[i], TLS1_3_VERSION, TLS1_3_VERSION,
-                                 0, NULL))
-                continue;
-
             curve_id = pgroups[i];
             break;
         }
@@ -701,7 +758,7 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    if (!add_key_share(s, pkt, curve_id)) {
+    if (!add_key_share_reduce(s, pkt, curve_id)) {
         /* SSLfatal() already called */
         return EXT_RETURN_FAIL;
     }

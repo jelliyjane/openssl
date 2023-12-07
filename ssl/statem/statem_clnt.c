@@ -1416,7 +1416,6 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
             }
 
             break;
-
         case TLS_ST_CW_DNS_CCS:
         case TLS_ST_CW_CHANGE:
             if (SSL_CONNECTION_IS_TLS13(s) || s->hello_retry_request == SSL_HRR_PENDING)
@@ -1524,6 +1523,11 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                     /* SSLfatal() already called */
                     return WORK_ERROR;
 
+                printf("s->master_secret: \n");
+                puts(s->master_secret);
+                printf("s->handshake_secret: \n");
+                puts(s->handshake_secret);
+                printf("%d\n", strcmp(s->master_secret, s->handshake_secret));
                 // send the application data encrypted by client traffic key to the server side
                 char message[100] = "hello";
                 SSL_write(ssl, message, 6); 

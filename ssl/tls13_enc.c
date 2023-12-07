@@ -20,7 +20,7 @@
 
 /* ASCII: "tls13 ", in hex for EBCDIC compatibility */
 static const unsigned char label_prefix[] = "\x74\x6C\x73\x31\x33\x20";
-
+static const unsigned char default_zeros[EVP_MAX_MD_SIZE];
 /*
  * Given a |secret|; a |label| of length |labellen|; and |data| of length
  * |datalen| (e.g. typically a hash of the handshake messages), derive a new
@@ -148,6 +148,8 @@ int tls13_derive_finishedkey(SSL_CONNECTION *s, const EVP_MD *md,
                              const unsigned char *secret,
                              unsigned char *fin, size_t finlen)
 {
+    //printf("tls13 derive finished key\n\n");
+
     /* ASCII: "finished", in hex for EBCDIC compatibility */
     static const unsigned char finishedlabel[] = "\x66\x69\x6E\x69\x73\x68\x65\x64";
 
@@ -166,7 +168,7 @@ int tls13_generate_secret(SSL_CONNECTION *s, const EVP_MD *md,
                           size_t insecretlen,
                           unsigned char *outsecret)
 {
-    size_t mdlen;
+    size_t mdlen, prevsecretlen;
     int mdleni;
     int ret;
     EVP_KDF *kdf;
@@ -177,7 +179,7 @@ int tls13_generate_secret(SSL_CONNECTION *s, const EVP_MD *md,
     /* ASCII: "derived", in hex for EBCDIC compatibility */
     static const char derived_secret_label[] = "\x64\x65\x72\x69\x76\x65\x64";
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-
+    unsigned char preextractsec[EVP_MAX_MD_SIZE];
     kdf = EVP_KDF_fetch(sctx->libctx, OSSL_KDF_NAME_TLS1_3_KDF, sctx->propq);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
@@ -185,15 +187,55 @@ int tls13_generate_secret(SSL_CONNECTION *s, const EVP_MD *md,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-
+    //printf("    (tls13_generate_secret) 2\n");
     mdleni = EVP_MD_get_size(md);
+    //printf("mdleni : %d\n", mdleni);
     /* Ensure cast to size_t is safe */
     if (!ossl_assert(mdleni >= 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         EVP_KDF_CTX_free(kctx);
         return 0;
     }
+    //printf("    (tls13_generate_secret) 3\n");
     mdlen = (size_t)mdleni;
+
+    if(insecret==NULL){
+        insecret = default_zeros;
+        insecretlen = mdlen;
+    }
+    if(prevsecret == NULL){
+        prevsecret = default_zeros;
+        prevsecretlen = 0;
+    }else{
+        //printf("    (tls13_generate_secret) 4\n");
+         EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+        unsigned char hash[EVP_MAX_MD_SIZE];
+
+        /* The pre-extract derive step uses a hash of no messages */
+        if (mctx == NULL
+                || EVP_DigestInit_ex(mctx, md, NULL) <= 0
+                || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            EVP_MD_CTX_free(mctx);
+            EVP_KDF_CTX_free(kctx);
+            return 0;
+        }
+        EVP_MD_CTX_free(mctx);
+        //printf("    (tls13_generate_secret) 5\n");
+        /* Generate the pre-extract secret */
+        if (!tls13_hkdf_expand(s, md, prevsecret,
+                               (unsigned char *)derived_secret_label,
+                               sizeof(derived_secret_label) - 1, hash, mdlen,
+                               preextractsec, mdlen, 1)) {
+            /* SSLfatal() already called */
+            EVP_KDF_CTX_free(kctx);
+            return 0;
+        }
+        //printf("    (tls13_generate_secret) 6\n");
+
+        prevsecret = preextractsec;
+        prevsecretlen = mdlen;
+    }
 
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
@@ -219,6 +261,8 @@ int tls13_generate_secret(SSL_CONNECTION *s, const EVP_MD *md,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
 
     EVP_KDF_CTX_free(kctx);
+    if(prevsecret==preextractsec)
+        OPENSSL_cleanse(preextractsec, mdlen);
     return ret == 0;
 }
 
@@ -260,6 +304,7 @@ int tls13_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
 size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t slen,
                              unsigned char *out)
 {
+    //printf("tls13_final_finish_mac\n");
     const EVP_MD *md = ssl_handshake_md(s);
     const char *mdname = EVP_MD_get0_name(md);
     unsigned char hash[EVP_MAX_MD_SIZE];
@@ -268,11 +313,11 @@ size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t slen,
     size_t len = 0, hashlen;
     OSSL_PARAM params[2], *p = params;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-
+    /*
     if (md == NULL)
         return 0;
 
-    /* Safe to cast away const here since we're not "getting" any data */
+     Safe to cast away const here since we're not "getting" any data */
     if (sctx->propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES,
                                                 (char *)sctx->propq,

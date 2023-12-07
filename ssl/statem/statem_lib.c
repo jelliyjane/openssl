@@ -854,16 +854,27 @@ CON_FUNC_RETURN tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
      * moment. If we didn't already do this when we sent the client certificate
      * then we need to do it now.
      */
-    if (SSL_CONNECTION_IS_TLS13(s)
+    //printf("log1\n");
+    ssl->method = tlsv1_3_client_method();
+    /*if (SSL_CONNECTION_IS_TLS13(s)
             && !s->server
             && (s->early_data_state != SSL_EARLY_DATA_NONE
                 || (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
             && s->s3.tmp.cert_req == 0
             && (!ssl->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {;
+        SSLfatal() already called
+        return CON_FUNC_ERROR;
+    }*/
+    if (SSL_CONNECTION_IS_TLS13(s)
+            && !s->server
+            && s->s3.tmp.cert_req == 0
+            && (!ssl->method->ssl3_enc->setup_key_block(s) || !ssl->method->ssl3_enc->change_cipher_state(s,
+                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {;
         /* SSLfatal() already called */
         return CON_FUNC_ERROR;
     }
+    //printf("log2\n");
 
     if (s->server) {
         sender = ssl->method->ssl3_enc->server_finished_label;
