@@ -1025,12 +1025,13 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
         s->first_packet = 1;
         st->read_state_first_init = 0;
     }
+    //clear_record_layer(s);
 
     while (1) {
         switch (st->read_state) {
             case READ_STATE_HEADER:
 
-                //            printf("READ_STATE_HEADER in read_state_machine func\n");
+                            printf("READ_STATE_HEADER in read_state_machine func\n");
                 /* Get the state the peer wants to move to */
                 if (SSL_CONNECTION_IS_DTLS(s)) {
                     /*
@@ -1079,7 +1080,7 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
                 /* Fall through */
 
             case READ_STATE_BODY:
-//                printf("READ_STATE_BODY in read_state_machine func\n");
+                printf("READ_STATE_BODY in read_state_machine func\n");
                 if (SSL_CONNECTION_IS_DTLS(s)) {
                     /*
                      * Actually we already have the body, but we give DTLS the
@@ -1087,8 +1088,9 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
                      */
                     ret = dtls_get_message_body(s, &len);
                 } else {
-                    //                printf("    read message body in read_state_machine func\n");
+                                    //printf("    read message body in read_state_machine func\n");
                     ret = tls_get_message_body(s, &len);
+                    printf("after get message body\n");
                 }
                 if (ret == 0) {
                     /* Could be non-blocking IO */
@@ -1100,7 +1102,7 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return SUB_STATE_ERROR;
                 }
-//                printf("           before process message: %s\n",SSL_state_string_long(s));
+                printf("           before process message: %s\n",SSL_state_string_long(s));
                 ret = process_message(s, &pkt);
 
                 /* Discard the packet data */

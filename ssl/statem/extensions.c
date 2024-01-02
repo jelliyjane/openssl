@@ -640,6 +640,9 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
+        if(type == 53){
+            s->early_data_state = SSL_DNS_CCS;
+        }
         /*
          * Verify this extension is allowed. We only check duplicates for
          * extensions that we recognise. We also have a special case for the
@@ -737,6 +740,8 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
 int tls_parse_extension(SSL_CONNECTION *s, TLSEXT_INDEX idx, int context,
                         RAW_EXTENSION *exts, X509 *x, size_t chainidx)
 {
+    
+    //printf("    start\n");
     RAW_EXTENSION *currext = &exts[idx];
     int (*parser)(SSL_CONNECTION *s, PACKET *pkt, unsigned int context, X509 *x,
                   size_t chainidx) = NULL;
@@ -750,6 +755,7 @@ int tls_parse_extension(SSL_CONNECTION *s, TLSEXT_INDEX idx, int context,
         return 1;
 
     currext->parsed = 1;
+    //printf("    (tls_parse_extension) current idx : %d\n", idx);
 
     if (idx < OSSL_NELEM(ext_defs)) {
         /* We are handling a built-in extension */
@@ -760,9 +766,13 @@ int tls_parse_extension(SSL_CONNECTION *s, TLSEXT_INDEX idx, int context,
             return 1;
 
         parser = s->server ? extdef->parse_ctos : extdef->parse_stoc;
+        //printf("    (tls_parse_extension) idx : %d\n", idx);
+        //printf("    (tls_parse_extension) type : %d\n", extdef->type);
 
-        if (parser != NULL)
+        if (parser != NULL){
+            //printf("    (tls_parse_extension) call\n");
             return parser(s, &currext->data, context, x, chainidx);
+        }
 
         /*
          * If the parser is NULL we fall through to the custom extension
@@ -771,6 +781,7 @@ int tls_parse_extension(SSL_CONNECTION *s, TLSEXT_INDEX idx, int context,
     }
 
     /* Parse custom extensions */
+    //printf("    (tls_parse_extension) end\n");
     return custom_ext_parse(s, context, currext->type,
                             PACKET_data(&currext->data),
                             PACKET_remaining(&currext->data),

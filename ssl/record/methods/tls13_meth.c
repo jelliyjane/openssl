@@ -171,17 +171,18 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         }
         rec->length += rl->taglen;
     }
-
     return 1;
 }
 
 static int tls13_validate_record_header(OSSL_RECORD_LAYER *rl,
                                         TLS_RL_RECORD *rec)
 {
+    printf("rec->type2: %d\n",rec->type);
     if (rec->type != SSL3_RT_APPLICATION_DATA
             && (rec->type != SSL3_RT_CHANGE_CIPHER_SPEC
                 || !rl->is_first_handshake)
             && (rec->type != SSL3_RT_ALERT || !rl->allow_plain_alerts)) {
+            printf("error in the tls13_validate_record_header\n");
         RLAYERfatal(rl, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_BAD_RECORD_TYPE);
         return 0;
     }

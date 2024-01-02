@@ -612,7 +612,7 @@ int ssl3_read_bytes(SSL *ssl, uint8_t type, uint8_t *recvd_type,
     /*
      * Now s->rlayer.handshake_fragment_len == 0 if type == SSL3_RT_HANDSHAKE.
      */
-
+    printf("is_tls13(1): %d\n",is_tls13);
     if (!ossl_statem_get_in_handshake(s) && SSL_in_init(ssl)) {
         /* type == SSL3_RT_APPLICATION_DATA */
         i = s->handshake_func(ssl);
@@ -622,6 +622,7 @@ int ssl3_read_bytes(SSL *ssl, uint8_t type, uint8_t *recvd_type,
         if (i == 0)
             return -1;
     }
+        printf("is_tls13(2): %d\n",is_tls13);
  start:
     s->rwstate = SSL_NOTHING;
 
@@ -637,6 +638,7 @@ int ssl3_read_bytes(SSL *ssl, uint8_t type, uint8_t *recvd_type,
         s->rlayer.curr_rec = s->rlayer.num_recs = 0;
         do {
             rr = &s->rlayer.tlsrecs[s->rlayer.num_recs];
+            printf("is_tls13(3): %d\n",is_tls13);
 
             ret = HANDLE_RLAYER_READ_RETURN(s,
                     s->rlayer.rrlmethod->read_record(s->rlayer.rrl,
@@ -708,14 +710,12 @@ int ssl3_read_bytes(SSL *ssl, uint8_t type, uint8_t *recvd_type,
             SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_APP_DATA_IN_HANDSHAKE);
             return -1;
         }
-
         if (type == SSL3_RT_HANDSHAKE
             && rr->type == SSL3_RT_CHANGE_CIPHER_SPEC
             && s->rlayer.handshake_fragment_len > 0) {
             SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_CCS_RECEIVED_EARLY);
             return -1;
         }
-
         if (recvd_type != NULL)
             *recvd_type = rr->type;
 

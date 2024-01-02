@@ -1785,6 +1785,7 @@ int tls_get_message_header(SSL_CONNECTION *s, int *mt)
 
     do {
         while (s->init_num < SSL3_HM_HEADER_LENGTH) {
+
             i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, &recvd_type,
                                             &p[s->init_num],
                                             SSL3_HM_HEADER_LENGTH - s->init_num,

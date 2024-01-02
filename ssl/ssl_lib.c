@@ -4748,6 +4748,7 @@ int SSL_do_handshake(SSL *s)
 }
 int SSL_do_handshake_reduce(SSL *s)
 {
+    printf("SSL_do_handshake_reduce\n");
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
     struct timespec begin;
     clock_gettime(CLOCK_MONOTONIC, &begin);
@@ -4820,6 +4821,7 @@ void SSL_set_connect_state(SSL *s)
     ossl_statem_clear(sc);
     sc->handshake_func = s->method->ssl_connect;
     /* Ignore return value. Its a void public API function */
+    printf("SSL_set_connect_state, clear_record_layer(sc)\n");
     clear_record_layer(sc);
     //clear_ciphers(sc);
 }

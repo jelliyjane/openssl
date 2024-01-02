@@ -27,6 +27,7 @@
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include "internal/cryptlib.h"
+#include "../record/methods/recmethod_local.h"
 
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
@@ -1515,6 +1516,7 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
 
                 // second ccs : client traffic secret 0
                 size_t dummy;
+
                 if (!tls13_generate_master_secret(s,
                                                   s->master_secret, s->handshake_secret, 0,
                                                   &dummy)
@@ -1540,6 +1542,8 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                 printf("============================================\n");
                 //  load the tmp to reset the cipher state
                 *s = tmp;
+                //s->rlayer.wrl->funcs = &tls_any_funcs;
+                s->rlayer.rrl->funcs = &tls_any_funcs;
 
                 if (SSL_CONNECTION_IS_DTLS(s)) {
 #ifndef OPENSSL_NO_SCTP
@@ -1560,6 +1564,7 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                 }
                 // back to the original method
                 ssl->method = TLS_client_method();
+
             }else {
                 if (statem_flush(s) != 1)
                     return WORK_MORE_B;
@@ -2133,7 +2138,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
 #endif
-
     if (!PACKET_get_net_2(pkt, &sversion)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         goto err;
@@ -2190,7 +2194,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
         goto err;
     }
-
     if (!hrr) {
         if (!tls_collect_extensions(s, &extpkt,
                                     SSL_EXT_TLS1_2_SERVER_HELLO
@@ -2220,6 +2223,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             goto err;
         }
     }
+
 
     if (hrr) {
         if (!set_client_ciphersuite(s, cipherchars)) {
@@ -2401,7 +2405,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         s->s3.tmp.new_compression = comp;
     }
 #endif
-
     if (!tls_parse_all_extensions(s, context, extensions, NULL, 0, 1)) {
         /* SSLfatal() already called */
         goto err;
@@ -2443,6 +2446,8 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
      * In TLSv1.3 we have some post-processing to change cipher state, otherwise
      * we're done with this message
      */
+    printf("check ccs func\n\n");
+    //tls13_change_cipher_state(s);
     if (SSL_CONNECTION_IS_TLS13(s)) {
         if (!ssl->method->ssl3_enc->setup_key_block(s)
                 || !ssl->method->ssl3_enc->change_cipher_state(s,

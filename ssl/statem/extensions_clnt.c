@@ -1825,6 +1825,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
                              unsigned int context, X509 *x,
                              size_t chainidx)
 {
+    printf("tls_parse_stoc_key_share\n");
 #ifndef OPENSSL_NO_TLS1_3
     unsigned int group_id;
     PACKET encoded_pt;
@@ -1832,10 +1833,10 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
     const TLS_GROUP_INFO *ginf = NULL;
 
     /* Sanity check */
-    if (ckey == NULL || s->s3.peer_tmp != NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+//    if (ckey == NULL || s->s3.peer_tmp != NULL) {
+//        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+//       return 0;
+//    }
 
     if (!PACKET_get_net_2(pkt, &group_id)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
@@ -1925,19 +1926,26 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
 
     if (!ginf->is_kem) {
         /* Regular KEX */
-        skey = EVP_PKEY_new();
-        if (skey == NULL || EVP_PKEY_copy_parameters(skey, ckey) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_COPY_PARAMETERS_FAILED);
-            EVP_PKEY_free(skey);
-            return 0;
+        if(s->early_data_state == SSL_DNS_CCS){
+            skey = s->s3.peer_tmp;
+
+        }else{
+            skey = EVP_PKEY_new();
+            if (skey == NULL || EVP_PKEY_copy_parameters(skey, ckey) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_COPY_PARAMETERS_FAILED);
+                EVP_PKEY_free(skey);
+                return 0;
+            }
+
+            if (tls13_set_encoded_pub_key(skey, PACKET_data(&encoded_pt),
+                                          PACKET_remaining(&encoded_pt)) <= 0) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_ECPOINT);
+                EVP_PKEY_free(skey);
+                return 0;
+            }
+
         }
 
-        if (tls13_set_encoded_pub_key(skey, PACKET_data(&encoded_pt),
-                                      PACKET_remaining(&encoded_pt)) <= 0) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_ECPOINT);
-            EVP_PKEY_free(skey);
-            return 0;
-        }
 
         if (ssl_derive(s, ckey, skey, 1) == 0) {
             /* SSLfatal() already called */
