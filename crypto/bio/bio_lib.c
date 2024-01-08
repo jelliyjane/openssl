@@ -38,6 +38,7 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
                               int argi, long argl, long inret,
                               size_t *processed)
 {
+    printf("bio_call_callback\n");
     long ret = inret;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     int bareoper;
@@ -274,25 +275,27 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
 
     if (HAS_CALLBACK(b) &&
         ((ret = (int)bio_call_callback(b, BIO_CB_READ, data, dlen, 0, 0L, 1L,
-                                       NULL)) <= 0))
-        return ret;
+                                       NULL)) <= 0)){
 
+        return ret;
+    }
     if (!b->init) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return -1;
     }
 
     ret = b->method->bread(b, data, dlen, readbytes);
-
+   //  printf("ret2: %d\n", ret);
     if (ret > 0)
         b->num_read += (uint64_t)*readbytes;
 
     if (HAS_CALLBACK(b))
         ret = (int)bio_call_callback(b, BIO_CB_READ | BIO_CB_RETURN, data,
                                      dlen, 0, 0L, ret, readbytes);
-
+   // printf("ret3: %d\n", ret);
     /* Shouldn't happen */
     if (ret > 0 && *readbytes > dlen) {
+        printf("shouldn't happen\n");
         ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
         return -1;
     }
@@ -303,18 +306,16 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
 int BIO_read(BIO *b, void *data, int dlen)
 {
     size_t readbytes;
-    int ret;
-
+    int ret; 
     if (dlen < 0)
         return 0;
-
+   // printf("readbytes: %d\n", (int)readbytes);
     ret = bio_read_intern(b, data, (size_t)dlen, &readbytes);
 
     if (ret > 0) {
         /* *readbytes should always be <= dlen */
         ret = (int)readbytes;
     }
-
     return ret;
 }
 
@@ -325,6 +326,7 @@ int BIO_read_ex(BIO *b, void *data, size_t dlen, size_t *readbytes)
 
 static int bio_write_intern(BIO *b, const void *data, size_t dlen,
                             size_t *written)
+
 {
     size_t local_written;
     int ret;

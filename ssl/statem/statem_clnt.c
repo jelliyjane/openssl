@@ -9,6 +9,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "../crypto/bio/bio_local.h"
+#include <openssl/bio.h>
+
+
+
 #include <stdio.h>
 #include <time.h>
 #include <assert.h>
@@ -1176,7 +1181,7 @@ WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
 
 WORK_STATE ossl_statem_client_pre_work_reduce(SSL_CONNECTION *s, WORK_STATE wst) {
     OSSL_STATEM *st = &s->statem;
-    printf("      prework st->hand_state: %d\n", st->hand_state);
+    //printf("      prework st->hand_state: %d\n", st->hand_state);
     switch (st->hand_state) {
         default:
             /* No pre work to be done */
@@ -1274,6 +1279,13 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             s->first_packet = 1;
         }
         break;
+
+    case TLS_ST_CW_END_OF_EARLY_DATA:
+       // printf("TLS_ST_CW_END_OF_EARLY_DATA\n");
+        /*
+         * We set the enc_write_ctx back to NULL because we may end up writing
+         * in cleartext again if we get a HelloRetryRequest from the server.
+         */    
 
     case TLS_ST_CW_KEY_EXCH:
         if (tls_client_key_exchange_post_work(s) == 0) {
@@ -1481,6 +1493,10 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
              * We set the enc_write_ctx back to NULL because we may end up writing
              * in cleartext again if we get a HelloRetryRequest from the server.
              */
+            printf("TLS_ST_CW_END_OF_EARLY_DATA\n");
+    //        EVP_CIPHER_CTX_free(s->enc_write_ctx);
+  //          s->enc_write_ctx = NULL;
+//            break;
 
         case TLS_ST_CW_KEY_EXCH:
             if (tls_client_key_exchange_post_work(s) == 0) {
@@ -1505,7 +1521,11 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
 // store the previous SSL*s to reset the cipher state
             if(st->hand_state == TLS_ST_CW_DNS_FINISHED_APPLICATION
                     && s->early_data_state == SSL_DNS_FINISHED_WRITING){
-                SSL_CONNECTION tmp = *s;
+                //SSL_CONNECTION tmpp = *s;
+               //////////////////////////////////  plan A
+                SSL tmpp = *ssl;
+               tmpp.method = ssl->method;
+              //////////////////////////////////
                 // first ccs : server handshake traffic secret
                 if ((!ssl->method->ssl3_enc->setup_key_block(s)
                 || !tls13_change_cipher_state(s,
@@ -1541,10 +1561,12 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                 printf(": %f\n",(send_ctos.tv_sec) + (send_ctos.tv_nsec) / 1000000000.0);
                 printf("============================================\n");
                 //  load the tmp to reset the cipher state
-                *s = tmp;
+
+                printf("statem_clent.c post_work_reduce: %s\n", s->rlayer.rrl->bio->method->name);
+                ssl->method = tmpp.method; 
                 //s->rlayer.wrl->funcs = &tls_any_funcs;
                 s->rlayer.rrl->funcs = &tls_any_funcs;
-
+                 printf("statem_clent.c post_work_reduce2: %s\n", s->rlayer.rrl->bio->method->name);
                 if (SSL_CONNECTION_IS_DTLS(s)) {
 #ifndef OPENSSL_NO_SCTP
                     if (s->hit) {
@@ -3868,7 +3890,7 @@ static int tls_construct_cke_dhe(SSL_CONNECTION *s, WPACKET *pkt)
     ret = 1;
  err:
     OPENSSL_free(encoded_pub);
-    EVP_PKEY_free(ckey);
+    EVP_PKEY_free(skey);
     return ret;
 }
 

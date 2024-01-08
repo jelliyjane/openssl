@@ -12,6 +12,10 @@
 # include <spt_extensions.h> /* timeval */
 #endif
 
+#include "../crypto/bio/bio_local.h"
+#include <openssl/bio.h>
+#include "../record/methods/recmethod_local.h"
+
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "../ssl_local.h"
@@ -400,6 +404,7 @@ static int state_machine(SSL_CONNECTION *s, int server)
          * If we are stateless then we already called SSL_clear() - don't do
          * it again and clear the STATELESS flag itself.
          */
+
         if ((s->s3.flags & TLS1_FLAGS_STATELESS) == 0 && !SSL_clear(ssl))
             return -1;
     }
@@ -559,6 +564,7 @@ static int state_machine_reduce(SSL_CONNECTION *s, int server) {
 //    clock_gettime(CLOCK_MONOTONIC, &begin);
 //    printf("state_machine reduce start");
 //  printf(" : %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
+
     BUF_MEM *buf = NULL;
     void (*cb)(const SSL *ssl, int type, int val) = NULL;
     OSSL_STATEM *st = &s->statem;
@@ -1039,7 +1045,7 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
                      */
                     ret = dtls_get_message(s, &mt);
                 } else {
-                    //                printf("    read message header in read_state_machine func\n");
+                                    printf("    read message header in read_state_machine func\n");
                     ret = tls_get_message_header(s, &mt);
                 }
                 if (ret == 0) {
@@ -1090,7 +1096,7 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
                 } else {
                                     //printf("    read message body in read_state_machine func\n");
                     ret = tls_get_message_body(s, &len);
-                    printf("after get message body\n");
+               //     printf("after get message body\n");
                 }
                 if (ret == 0) {
                     /* Could be non-blocking IO */
@@ -1173,7 +1179,7 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
 static int statem_do_write(SSL_CONNECTION *s)
 {
     OSSL_STATEM *st = &s->statem;
-    printf("statem_do_write st->hand_state: %d\n", st->hand_state);
+  //  printf("statem_do_write st->hand_state: %d\n", st->hand_state);
 
     if (st->hand_state == TLS_ST_CW_CHANGE
         || st->hand_state == TLS_ST_SW_CHANGE|| st->hand_state == TLS_ST_CW_DNS_CCS) {
@@ -1418,8 +1424,8 @@ static SUB_STATE_RETURN write_state_machine_reduce(SSL_CONNECTION *s) {
 
     struct timespec begin;
     while (1) {
-        printf("   sst->write_state: %d\n", st->write_state);
-        printf("   s->early_data_state: %d\n",s->early_data_state);
+      //  printf("   sst->write_state: %d\n", st->write_state);
+      //  printf("   s->early_data_state: %d\n",s->early_data_state);
         switch (st->write_state) {
             case WRITE_STATE_TRANSITION:
                             printf("   WRITE_STATE_TRANSITION in write_state_machine func \n");
