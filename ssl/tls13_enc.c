@@ -286,15 +286,20 @@ size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t slen,
 
     if (str == SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->server_finished_label) {
         key = s->server_finished_secret;
+        //printf("key 1\n");
     } else if (SSL_IS_FIRST_HANDSHAKE(s)) {
         key = s->client_finished_secret;
+        //printf("key 2\n");
     } else {
+        /*printf("s->client_app_traffic_secret: %s\n",s->client_app_traffic_secret);
         if (!tls13_derive_finishedkey(s, md,
                                       s->client_app_traffic_secret,
                                       finsecret, hashlen))
             goto err;
-        key = finsecret;
+        key = finsecret;*/
+        key = s->client_finished_secret;
     }
+    //printf("key: %s\n", key);
 
     if (!EVP_Q_mac(sctx->libctx, "HMAC", sctx->propq, mdname,
                    params, key, hashlen, hash, hashlen,

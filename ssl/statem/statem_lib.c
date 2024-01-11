@@ -897,6 +897,7 @@ CON_FUNC_RETURN tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
     finish_md_len = ssl->method->ssl3_enc->final_finish_mac(s,
                                                             sender, slen,
                                                             s->s3.tmp.finish_md);
+
     if (finish_md_len == 0) {
         /* SSLfatal() already called */
         return CON_FUNC_ERROR;

@@ -1487,6 +1487,7 @@ static SUB_STATE_RETURN write_state_machine_reduce(SSL_CONNECTION *s) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return SUB_STATE_ERROR;
                 }
+                printf("is here2\n");
                 if (confunc != NULL) {
                     CON_FUNC_RETURN tmpret;
 
@@ -1497,6 +1498,7 @@ static SUB_STATE_RETURN write_state_machine_reduce(SSL_CONNECTION *s) {
                     return SUB_STATE_ERROR;
                     }
                 }
+                printf("is here3\n");
                 if (!ssl_close_construct_packet(s, &pkt, mt)
                     || !WPACKET_finish(&pkt)) {
                     WPACKET_cleanup(&pkt);
