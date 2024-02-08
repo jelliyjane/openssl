@@ -463,7 +463,7 @@ int verifySignature(char* publicKey, char* plainText, char* signatureBase64) {
 //ZTLS function
 int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
                               const unsigned char *context, size_t contextlen){
-    printf("verify the Server's Certificate ");
+
     struct timespec begin;
     clock_gettime(CLOCK_MONOTONIC, &begin);
     printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
@@ -471,6 +471,7 @@ int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
     X509 *x;
     BIO* outbio;
     unsigned char pubKey[contextlen];
+
 
     STACK_OF(X509) *r;
     if (s == NULL){
@@ -486,7 +487,9 @@ int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
 
     x = sk_X509_value(r, 0);
 
+
     EVP_PKEY* pkey = X509_get0_pubkey(x);
+
     const SSL_CERT_LOOKUP *clu;
     size_t certidx;
 
@@ -495,11 +498,13 @@ int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
                  SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
         printf("error\n");
     }
-
-    if ((clu = ssl_cert_lookup_by_pkey(pkey, &certidx, s)) == NULL) {
+    //PEM_write_PUBKEY(stdout, pkey);
+    SSL* ssl = SSL_CONNECTION_GET_SSL(s);
+    if ((clu = ssl_cert_lookup_by_pkey(pkey, &certidx, ssl->ctx)) == NULL) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-        printf("error\n");
+        printf("error2\n");
     }
+
     /*
      * Check certificate type is consistent with ciphersuite. For TLS 1.3
      * skip check since TLS 1.3 ciphersuites can be used with any certificate
@@ -517,7 +522,7 @@ int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
     pkey = X509_get0_pubkey(peer);
     if (pkey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        printf("error\n");
+        printf("error3\n");
     }
     outbio  = BIO_new(BIO_s_mem());
     PEM_write_bio_PUBKEY( outbio, pkey );

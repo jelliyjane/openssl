@@ -2907,7 +2907,6 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic)
 {
     long l;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-
     if (sc == NULL)
         return 0;
 
@@ -3760,12 +3759,13 @@ int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                int use_context)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-    printf("export keying material sc->early_data_state:%d\n", sc->early_data_state);
+
     if (sc == NULL)
         return -1;
     if(sc->early_data_state == SSL_DNS_CCS){// if ZTLS
         // load session->peer
         early_process_cert_verify(sc, out, context, contextlen);
+        printf("SSL_export_keying_material2, sc->rlayer.wpend_tot: %d\n",sc->rlayer.wpend_tot);
     }else{
 
         if (sc->session == NULL

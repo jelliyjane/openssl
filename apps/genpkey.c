@@ -15,6 +15,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
+
 static int verbose = 1;
 
 static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e,
@@ -149,7 +150,6 @@ int genpkey_main(int argc, char **argv)
         case OPT_PASS:
             passarg = opt_arg();
             break;
-        case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
         case OPT_PARAMFILE:

@@ -3242,7 +3242,7 @@ WORK_STATE tls_post_process_client_hello_reduce(SSL_CONNECTION *s, WORK_STATE ws
 
         unsigned char *encodedPoint;
         size_t encoded_pt_len = 0;
-        EVP_PKEY *ckey = s->s3.peer_tmp, *skey = NULL, *skey1 = NULL;
+        EVP_PKEY *ckey = s->s3.peer_tmp, *skey = NULL;
         FILE *f;
         f = fopen("dns/keyshare/privKey.pem", "rb");
         PEM_read_PrivateKey(f, &skey, NULL, NULL);

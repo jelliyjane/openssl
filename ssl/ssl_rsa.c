@@ -74,6 +74,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
             printf("authenticate cert chain");
             clock_gettime(CLOCK_MONOTONIC, &begin);
             printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
+
     }
 
     return ssl_set_cert(sc->cert, x, SSL_CONNECTION_GET_CTX(sc));
@@ -156,19 +157,15 @@ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, SSL_CTX *ctx)
 {
     size_t i;
-    printf("here0\n");
 
     if (ssl_cert_lookup_by_pkey(pkey, &i, ctx) == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-        printf("here1\n");
         return 0;
     }
 
     if (c->pkeys[i].x509 != NULL
             && !X509_check_private_key(c->pkeys[i].x509, pkey))
-        printf("here2\n");
         return 0;
-    printf("here3\n");
     EVP_PKEY_free(c->pkeys[i].privatekey);
     EVP_PKEY_up_ref(pkey);
     c->pkeys[i].privatekey = pkey;

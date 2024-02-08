@@ -219,7 +219,6 @@ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
      */
     if (ctx->pkey != NULL && !ossl_assert(!evp_pkey_is_provided(ctx->pkey)))
         goto not_accessible;
-
     switch (ctx->operation) {
     case EVP_PKEY_OP_PARAMGEN:
         ret = ctx->pmeth->paramgen(ctx, *ppkey);

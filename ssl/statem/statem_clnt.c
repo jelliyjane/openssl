@@ -1450,11 +1450,13 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                 ssl->method = tlsv1_3_client_method();
                 s->s3.tmp.new_cipher = SSL_CIPHER_find(ssl, (const unsigned char *) "\x13\x02");
                 s->session->cipher = s->s3.tmp.new_cipher;
-                s->s3.group_id = 0x001d;
+                //s->s3.group_id = 0x001d;  //X25519
+                s->s3.group_id =0x023A; //kyber512
                 s->session->kex_group = s->s3.group_id;
 
                 // assign client's ecdhe private key and server public key
-                printf("      assign client's ecdhe private key and server public key\n");
+                //printf("      assign client's ecdhe private key and server public key\n");
+                printf("      assign client's kyber private key and server public key\n");
                 EVP_PKEY *ckey = NULL, *skey = NULL;
                 ckey = s->s3.tmp.pkey;
                 skey = s->s3.peer_tmp;
@@ -1467,11 +1469,18 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                 // derive handshake secret
 
                 //printf("ssl_derive: %d\n", ssl_derive(s, ckey, skey, 1));
-                if (ssl_derive(s, ckey, skey, 1) == 0) {
+               // if (ssl_derive(s, ckey, skey, 1) == 0) {
                     /* SSLfatal() already called */
+                //    EVP_PKEY_free(skey);
+                //    return 0;
+                //}
+                unsigned char *ct = NULL;
+                size_t ctlen = 0;
+                if(ssl_encapsulate(s, ckey, &ct, &ctlen, 0) == 0){
                     EVP_PKEY_free(skey);
                     return 0;
                 }
+                printf("ssl_encapsulate done well haha\n");
                 ssl->method = TLS_client_method();
 
             }
@@ -1611,6 +1620,7 @@ int ossl_statem_client_construct_message(SSL_CONNECTION *s,
                                          confunc_f *confunc, int *mt)
 {
     OSSL_STATEM *st = &s->statem;
+    printf("\n**ossl_statem_client_construct_message: %d\n\n", st->hand_state);
 
     switch (st->hand_state) {
     default:

@@ -1247,7 +1247,6 @@ SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx, SSL_C
     /* check classic pk types */
     for (i = 0; i < OSSL_NELEM(ssl_cert_info); i++) {
         SSL_CERT_LOOKUP *tmp_lu = &ssl_cert_info[i];
-
         if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->nid))
             || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->nid))) {
             if (pidx != NULL)
@@ -1258,7 +1257,8 @@ SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx, SSL_C
     /* check provider-loaded pk types */
     for (i = 0; ctx->sigalg_list_len; i++) {
         SSL_CERT_LOOKUP *tmp_lu = &(ctx->ssl_cert_info[i]);
-
+        //printf("OBJ_nid2ln(tmp_lu->nid): %s\n",OBJ_nid2ln(tmp_lu->nid));
+        //PEM_write_PUBKEY(stdout, pk);
         if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->nid))
             || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->nid))) {
             if (pidx != NULL)

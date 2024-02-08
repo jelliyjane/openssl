@@ -285,7 +285,7 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
             return -1;
         }
     }
-
+    //printf("ssl3_write_bytes, s->rlayer.wpend_tot: %d\n",s->rlayer.wpend_tot);
     i = tls_write_check_pending(s, type, buf, len);
     if (i < 0) {
         /* SSLfatal() already called */
