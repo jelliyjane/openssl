@@ -620,9 +620,9 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
             /* SSLfatal() already called */
             return 0;
         }
+            
     }
-
-    /* Encode the public key. */
+        /* Encode the public key. */
     encodedlen = EVP_PKEY_get1_encoded_public_key(key_share_key,
                                                   &encoded_point);
     if (encodedlen == 0) {
@@ -647,6 +647,8 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
     OPENSSL_free(encoded_point);
 
     return 1;
+
+
  err:
     if (s->s3.tmp.pkey == NULL)
         EVP_PKEY_free(key_share_key);
@@ -658,11 +660,44 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
 #ifndef OPENSSL_NO_TLS1_3
 static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
 {
+    printf("extensions_clnt: add_key_share_reduce\n");
     unsigned char *encoded_point = NULL;
-    EVP_PKEY *key_share_key = NULL;
+    EVP_PKEY *ckey =s->s3.peer_tmp, *key_share_key = NULL;
     size_t encodedlen;
 
-    if (s->s3.tmp.pkey != NULL) {
+    if(s->s3.peer_tmp != NULL){
+        printf("dns based PQC KEM mode\n");
+        unsigned char *ct = NULL;
+        size_t ctlen = 0;
+
+        if(ssl_encapsulate(s, ckey, &ct, &ctlen, 0) == 0){
+            return EXT_RETURN_FAIL;
+        }
+
+        if (ctlen == 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            OPENSSL_free(ct);
+            return EXT_RETURN_FAIL;
+        }
+
+        if (!WPACKET_sub_memcpy_u16(pkt, ct, ctlen)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            OPENSSL_free(ct);
+            return EXT_RETURN_FAIL;
+        }
+        OPENSSL_free(ct);
+
+        key_share_key = ssl_generate_pkey_group(s, curve_id);
+        if (key_share_key == NULL) {
+            /* SSLfatal() already called */
+            return 0;
+        }
+        s->s3.tmp.pkey = key_share_key;
+        s->s3.group_id = curve_id;
+
+        return 1;
+    }
+    else if (s->s3.tmp.pkey != NULL) {
         // NOT
 //        Log("start\n");
         if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING)) {
@@ -681,33 +716,34 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
             /* SSLfatal() already called */
             return 0;
         }
+            /* Encode the public key. */
+        encodedlen = EVP_PKEY_get1_encoded_public_key(key_share_key,
+                                                      &encoded_point);
+        if (encodedlen == 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EC_LIB);
+            goto err;
+        }
+
+        /* Create KeyShareEntry */
+        if (!WPACKET_put_bytes_u16(pkt, curve_id)
+        || !WPACKET_sub_memcpy_u16(pkt, encoded_point, encodedlen)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        /*
+         * When changing to send more than one key_share we're
+         * going to need to be able to save more than one EVP_PKEY. For now
+         * we reuse the existing tmp.pkey
+         */
+        s->s3.tmp.pkey = key_share_key;
+        s->s3.group_id = curve_id;
+        OPENSSL_free(encoded_point);
+
+        return 1;
     }
 
-    /* Encode the public key. */
-    encodedlen = EVP_PKEY_get1_encoded_public_key(key_share_key,
-                                                  &encoded_point);
-    if (encodedlen == 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EC_LIB);
-        goto err;
-    }
 
-    /* Create KeyShareEntry */
-    if (!WPACKET_put_bytes_u16(pkt, curve_id)
-    || !WPACKET_sub_memcpy_u16(pkt, encoded_point, encodedlen)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /*
-     * When changing to send more than one key_share we're
-     * going to need to be able to save more than one EVP_PKEY. For now
-     * we reuse the existing tmp.pkey
-     */
-    s->s3.tmp.pkey = key_share_key;
-    s->s3.group_id = curve_id;
-    OPENSSL_free(encoded_point);
-
-    return 1;
     err:
     if (s->s3.tmp.pkey == NULL)
         EVP_PKEY_free(key_share_key);
@@ -762,6 +798,7 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         /* SSLfatal() already called */
         return EXT_RETURN_FAIL;
     }
+    printf("end add key share reduce\n");
 
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
