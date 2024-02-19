@@ -680,7 +680,7 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
             return EXT_RETURN_FAIL;
         }
 
-        if (!WPACKET_sub_memcpy_u16(pkt, ct, ctlen)) {
+        if (!WPACKET_put_bytes_u16(pkt, curve_id) || !WPACKET_sub_memcpy_u16(pkt, ct, ctlen)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             OPENSSL_free(ct);
             return EXT_RETURN_FAIL;
