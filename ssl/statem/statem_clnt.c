@@ -1446,7 +1446,7 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
             if(st->hand_state == TLS_ST_CW_DNS_CCS
             && s->early_data_state == SSL_DNS_CCS){
                 // setting for tls13 change cipher spec
-                printf("      derive\n");
+                //printf("      derive\n");
                 ssl->method = tlsv1_3_client_method();
                 s->s3.tmp.new_cipher = SSL_CIPHER_find(ssl, (const unsigned char *) "\x13\x02");
                 s->session->cipher = s->s3.tmp.new_cipher;
@@ -1457,9 +1457,9 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                 // assign client's ecdhe private key and server public key
                 //printf("      assign client's ecdhe private key and server public key\n");
                 printf("      assign client's kyber private key and server public key\n");
-                EVP_PKEY *ckey = NULL, *skey = NULL;
-                ckey = s->s3.tmp.pkey;
-                skey = s->s3.peer_tmp;
+                //EVP_PKEY *ckey = NULL, *skey = NULL;
+                //ckey = s->s3.tmp.pkey;
+                //skey = s->s3.peer_tmp;
 //                FILE *f;
 //                f = fopen("pubKey.pem", "rb");
 //                PEM_read_PUBKEY(f, &skey, NULL, NULL);
@@ -1474,6 +1474,7 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                 //    EVP_PKEY_free(skey);
                 //    return 0;
                 //}
+                /*
                 unsigned char *ct = NULL;
                 size_t ctlen = 0;
                 if(ssl_encapsulate(s, ckey, &ct, &ctlen, 0) == 0){
@@ -1481,6 +1482,10 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                     return 0;
                 }
                 printf("ssl_encapsulate done well haha\n");
+                ssl->method = TLS_client_method();
+                */
+
+                printf("ssl_gensecret: %d \n",ssl_gensecret(s, s->s3.tmp.pms, s->s3.tmp.pmslen));
                 ssl->method = TLS_client_method();
 
             }

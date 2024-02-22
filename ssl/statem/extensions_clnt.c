@@ -662,7 +662,7 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
 {
     printf("extensions_clnt: add_key_share_reduce\n");
     unsigned char *encoded_point = NULL;
-    EVP_PKEY *ckey =s->s3.peer_tmp, *key_share_key = NULL;
+    EVP_PKEY *skey =s->s3.peer_tmp, *key_share_key = NULL;
     size_t encodedlen;
 
     if(s->s3.peer_tmp != NULL){
@@ -670,7 +670,12 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
         unsigned char *ct = NULL;
         size_t ctlen = 0;
 
-        if(ssl_encapsulate(s, ckey, &ct, &ctlen, 0) == 0){
+        EVP_PKEY *skey = NULL;
+        FILE *f;
+        f = fopen("kyber_pub.pem", "rb");
+        PEM_read_PUBKEY(f, &skey, NULL, NULL);
+        PEM_write_PUBKEY(stdout, skey);
+        if(ssl_encapsulate(s, skey, &ct, &ctlen, 0) == 0){
             return EXT_RETURN_FAIL;
         }
 
