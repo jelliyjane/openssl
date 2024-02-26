@@ -8,6 +8,9 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include "../crypto/bio/bio_local.h"
+#include <openssl/bio.h>
+#include "../record/methods/recmethod_local.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -27,7 +30,7 @@
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include "internal/cryptlib.h"
-#include "../record/methods/recmethod_local.h"
+//#include "../record/methods/recmethod_local.h"
 
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
@@ -1250,6 +1253,7 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
         break;
 
     case TLS_ST_CW_CLNT_HELLO:
+
         if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
                 && s->max_early_data > 0) {
             /*
@@ -1390,6 +1394,7 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
             break;
 
         case TLS_ST_CW_CLNT_HELLO:
+            printf("TLS_ST_CW_CLNT_HELLO s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
 
             if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
                 && s->max_early_data > 0) {
@@ -1419,6 +1424,7 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
             break;
         case TLS_ST_CW_DNS_CCS:
         case TLS_ST_CW_CHANGE:
+            printf("TLS_ST_CW_DNS_CCS s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
             if (SSL_CONNECTION_IS_TLS13(s) || s->hello_retry_request == SSL_HRR_PENDING)
                 break;
             if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
@@ -1505,6 +1511,7 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
 
         case TLS_ST_CW_DNS_FINISHED_APPLICATION:
         case TLS_ST_CW_FINISHED:
+            printf("TLS_ST_CW_DNS_FINISHED_APPLICATION s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
 #ifndef OPENSSL_NO_SCTP
             if (wst == WORK_MORE_A && SSL_CONNECTION_IS_DTLS(s) && s->hit == 0) {
                 /*
@@ -1527,6 +1534,7 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                     /* SSLfatal() already called */
                     return WORK_ERROR;
                 }
+                printf("11TLS_ST_CW_DNS_FINISHED_APPLICATION s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
 
                 // second ccs : client traffic secret 0
                 size_t dummy;
@@ -1539,6 +1547,7 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                     /* SSLfatal() already called */
                     return WORK_ERROR;
 
+                printf("22TLS_ST_CW_DNS_FINISHED_APPLICATION s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
                 printf("s->master_secret: \n");
                 puts(s->master_secret);
                 printf("s->handshake_secret: \n");
@@ -1546,7 +1555,9 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                 printf("%d\n", strcmp(s->master_secret, s->handshake_secret));
                 // send the application data encrypted by client traffic key to the server side
                 char message[100] = "hello";
+
                 SSL_write(ssl, message, 6); 
+                
                 printf("============================================\n");
                 printf("sending application data from client to server : %s ", message);
 #include <time.h>
@@ -1555,9 +1566,13 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                 printf(": %f\n",(send_ctos.tv_sec) + (send_ctos.tv_nsec) / 1000000000.0);
                 printf("============================================\n");
                 //  load the tmp to reset the cipher state
-                *s = tmp;
+                printf("33TLS_ST_CW_DNS_FINISHED_APPLICATION s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
+                //*s = tmp;
                 //s->rlayer.wrl->funcs = &tls_any_funcs;
+                printf("s->rlayer.rrl->bio->method->name: %s\n", s->rlayer.rrl->bio->method->name);
+                printf("44TLS_ST_CW_DNS_FINISHED_APPLICATION s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
                 s->rlayer.rrl->funcs = &tls_any_funcs;
+                printf("s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
 
                 if (SSL_CONNECTION_IS_DTLS(s)) {
 #ifndef OPENSSL_NO_SCTP

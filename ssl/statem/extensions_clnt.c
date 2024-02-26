@@ -1885,6 +1885,8 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
+    printf("groud_id: %d\n", group_id);
+
     if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
         const uint16_t *pgroups = NULL;
         size_t i, num_groups;
@@ -1962,9 +1964,10 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
 
     if (!PACKET_as_length_prefixed_2(pkt, &encoded_pt)
             || PACKET_remaining(&encoded_pt) == 0) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-        return 0;
+        //SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        //return 0;
     }
+    
 
     if (!ginf->is_kem) {
         /* Regular KEX */
@@ -1988,7 +1991,6 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
 
         }
 
-
         if (ssl_derive(s, ckey, skey, 1) == 0) {
             /* SSLfatal() already called */
             EVP_PKEY_free(skey);
@@ -1999,11 +2001,13 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         /* KEM Mode */
         const unsigned char *ct = PACKET_data(&encoded_pt);
         size_t ctlen = PACKET_remaining(&encoded_pt);
+        printf("decapsulate for ct: %s\n", ct);
+        printf("decapsulate for ctlen: %d\n", ctlen);
 
-        if (ssl_decapsulate(s, ckey, ct, ctlen, 1) == 0) {
+        //if (ssl_decapsulate(s, ckey, ct, ctlen, 1) == 0) {
             /* SSLfatal() already called */
-            return 0;
-        }
+        //    return 0;
+        //}
     }
     s->s3.did_kex = 1;
 #endif
