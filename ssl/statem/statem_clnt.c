@@ -142,9 +142,13 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
                 return 1;
             }
             if (mt == SSL3_MT_CERTIFICATE) {
-                st->hand_state = TLS_ST_CR_CERT;
+                printf("mt == SSL3_MT_CERTIFICATE\n");
+                st->hand_state = TLS_ST_CR_FINISHED;
                 return 1;
             }
+            printf("mt == SSL3_MT_CERTIFICATE not\n");
+            st->hand_state = TLS_ST_CR_FINISHED;
+                return 1;
 #ifndef OPENSSL_NO_COMP_ALG
             if (mt == SSL3_MT_COMPRESSED_CERTIFICATE
                     && s->ext.compress_certificate_sent) {
