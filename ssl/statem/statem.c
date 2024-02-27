@@ -12,6 +12,10 @@
 # include <spt_extensions.h> /* timeval */
 #endif
 
+#include "../crypto/bio/bio_local.h"
+#include <openssl/bio.h>
+#include "../record/methods/recmethod_local.h"
+
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "../ssl_local.h"
@@ -1089,6 +1093,8 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
                 } else {
                                     //printf("    read message body in read_state_machine func\n");
                     ret = tls_get_message_body(s, &len);
+                    //printf("msg body s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
+                    printf("len: %ld\n",len);
                     printf("after get message body\n");
                 }
                 if (ret == 0) {
@@ -1103,6 +1109,7 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
                 }
                 printf("           before process message: %s\n",SSL_state_string_long(s));
                 ret = process_message(s, &pkt);
+                printf("ret: %d\n", ret);
 
                 /* Discard the packet data */
                 s->init_num = 0;
@@ -1172,8 +1179,9 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
 static int statem_do_write(SSL_CONNECTION *s)
 {
     OSSL_STATEM *st = &s->statem;
-    printf("statem_do_write st->hand_state: %d\n", st->hand_state);
 
+    printf("statem_do_write st->hand_state: %d\n", st->hand_state);
+    printf("before ws->rlayer.rrl->bio->method->name: %s\n", s->rlayer.rrl->bio->method->name);
     if (st->hand_state == TLS_ST_CW_CHANGE
         || st->hand_state == TLS_ST_SW_CHANGE|| st->hand_state == TLS_ST_CW_DNS_CCS) {
         if (SSL_CONNECTION_IS_DTLS(s))
@@ -1185,7 +1193,7 @@ static int statem_do_write(SSL_CONNECTION *s)
 
     } else {
         return ssl_do_write(s);
-        
+
     }
 }
 

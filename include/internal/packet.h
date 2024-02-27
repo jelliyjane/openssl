@@ -385,6 +385,7 @@ __owur static ossl_inline int PACKET_get_bytes(PACKET *pkt,
         return 0;
 
     packet_forward(pkt, len);
+    printf("PACKET_get_bytes len: %ld\n", len);
 
     return 1;
 }

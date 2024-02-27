@@ -39,6 +39,7 @@ static const BIO_METHOD methods_buffer = {
 
 const BIO_METHOD *BIO_f_buffer(void)
 {
+    printf("\nBIO_f_buffer\n\n");
     return &methods_buffer;
 }
 

@@ -61,6 +61,7 @@ static const BIO_METHOD methods_sockp = {
 
 const BIO_METHOD *BIO_s_socket(void)
 {
+    printf("bss_sock\n\n");
     return &methods_sockp;
 }
 

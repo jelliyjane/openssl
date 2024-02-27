@@ -1394,7 +1394,6 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
             break;
 
         case TLS_ST_CW_CLNT_HELLO:
-            printf("TLS_ST_CW_CLNT_HELLO s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
 
             if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
                 && s->max_early_data > 0) {
@@ -1424,7 +1423,6 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
             break;
         case TLS_ST_CW_DNS_CCS:
         case TLS_ST_CW_CHANGE:
-            printf("TLS_ST_CW_DNS_CCS s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
             if (SSL_CONNECTION_IS_TLS13(s) || s->hello_retry_request == SSL_HRR_PENDING)
                 break;
             if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
@@ -1511,7 +1509,6 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
 
         case TLS_ST_CW_DNS_FINISHED_APPLICATION:
         case TLS_ST_CW_FINISHED:
-            printf("TLS_ST_CW_DNS_FINISHED_APPLICATION s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
 #ifndef OPENSSL_NO_SCTP
             if (wst == WORK_MORE_A && SSL_CONNECTION_IS_DTLS(s) && s->hit == 0) {
                 /*
@@ -1534,7 +1531,6 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                     /* SSLfatal() already called */
                     return WORK_ERROR;
                 }
-                printf("11TLS_ST_CW_DNS_FINISHED_APPLICATION s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
 
                 // second ccs : client traffic secret 0
                 size_t dummy;
@@ -1547,7 +1543,6 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                     /* SSLfatal() already called */
                     return WORK_ERROR;
 
-                printf("22TLS_ST_CW_DNS_FINISHED_APPLICATION s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
                 printf("s->master_secret: \n");
                 puts(s->master_secret);
                 printf("s->handshake_secret: \n");
@@ -1566,13 +1561,9 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                 printf(": %f\n",(send_ctos.tv_sec) + (send_ctos.tv_nsec) / 1000000000.0);
                 printf("============================================\n");
                 //  load the tmp to reset the cipher state
-                printf("33TLS_ST_CW_DNS_FINISHED_APPLICATION s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
                 //*s = tmp;
                 //s->rlayer.wrl->funcs = &tls_any_funcs;
-                printf("s->rlayer.rrl->bio->method->name: %s\n", s->rlayer.rrl->bio->method->name);
-                printf("44TLS_ST_CW_DNS_FINISHED_APPLICATION s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
                 s->rlayer.rrl->funcs = &tls_any_funcs;
-                printf("s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
 
                 if (SSL_CONNECTION_IS_DTLS(s)) {
 #ifndef OPENSSL_NO_SCTP

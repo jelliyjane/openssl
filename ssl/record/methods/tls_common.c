@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+//#include <internal/cryptlib.h>
+#include "../../../crypto/bio/bio_local.h"
+#include "../../../include/internal/cryptlib.h"
+
 #include <assert.h>
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
@@ -20,6 +24,8 @@
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"
+
+
 
 static void tls_int_free(OSSL_RECORD_LAYER *rl);
 
@@ -321,6 +327,7 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
 
     len = rl->packet_length;
     pkt = rb->buf + align;
+
     /*
      * Move any available bytes to front of buffer: 'len' bytes already
      * pointed to by 'packet', 'left' extra ones at the end
@@ -330,7 +337,8 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
         rl->packet = pkt;
         rb->offset = len + align;
     }
-
+    //printf("read_n rl->packet_length: %ld\n", len);
+    //printf("read_n left: %ld\n", left);
     /*
      * For DTLS/UDP reads should not span multiple packets because the read
      * operation returns the whole packet at once (as long as it fits into
@@ -380,8 +388,10 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
         printf("11111\n");
         size_t bioread = 0;
         int ret;
+        printf("rl->prev != NULL : %d\n", (rl->prev) != NULL );
         BIO *bio = rl->prev != NULL ? rl->prev : rl->bio;
-
+        printf("bio>method->name : %s\n", (bio->method->name ));
+        
         /*
          * Now we have len+left bytes at the front of rl->rbuf.buf and
          * need to read in more until we have len + n (up to len + max if
@@ -392,6 +402,10 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
         printf("2\n");
         if (bio != NULL) {
             printf("3\n");
+            printf("max: %ld\n",max);
+            //printf("left: %ld\n",left);
+            //printf("max - left: %ld\n",max - left);
+            //printf("\nbio->method->name: %s\n", bio->method->name);
             ret = BIO_read(bio, pkt + len + left, max - left);
             if (ret > 0) {
                 printf("4\n");
@@ -571,7 +585,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
             printf("a\n");
             size_t sslv2len;
             unsigned int type;
-
+            //printf("TLS_BUFFER_get_len(rbuf): %ld\n", TLS_BUFFER_get_len(rbuf));
             rret = rl->funcs->read_n(rl, SSL3_RT_HEADER_LENGTH,
                                      TLS_BUFFER_get_len(rbuf), 0,
                                      num_recs == 0 ? 1 : 0, &n);
@@ -588,6 +602,8 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
             }
             printf("b\n");
             sslv2pkt = pkt;
+            PACKET_get_1(&sslv2pkt, &type);
+            printf("tttype: %d\n", type);
             if (!PACKET_get_net_2_len(&sslv2pkt, &sslv2len)
                     || !PACKET_get_1(&sslv2pkt, &type)) {
                 RLAYERfatal(rl, SSL_AD_DECODE_ERROR, ERR_R_INTERNAL_ERROR);
@@ -635,7 +651,8 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
                 }
                 thisrr->type = type;
                 thisrr->rec_version = version;
-                //printf("type: %d\n", type);
+                printf("type: %d\n", type);
+                printf("version: %d\n", version);
 
                 /*
                  * When we call validate_record_header() only records actually
