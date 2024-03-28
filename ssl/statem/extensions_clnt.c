@@ -670,10 +670,10 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
         unsigned char *ct = NULL;
         size_t ctlen = 0;
 
-        EVP_PKEY *skey = NULL;
-        FILE *f;
-        f = fopen("kyber_pub.pem", "rb");
-        PEM_read_PUBKEY(f, &skey, NULL, NULL);
+        //EVP_PKEY *skey = NULL;
+        //FILE *f;
+        //f = fopen("kyber_pub.pem", "rb");
+        //PEM_read_PUBKEY(f, &skey, NULL, NULL);
         PEM_write_PUBKEY(stdout, skey);
         if(ssl_encapsulate(s, skey, &ct, &ctlen, 0) == 0){
             return EXT_RETURN_FAIL;
