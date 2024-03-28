@@ -261,7 +261,7 @@ int BIO_method_type(const BIO *b)
  */
 static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
 {
-    printf("bio_read_intern\n");
+    //printf("bio_read_intern\n");
     int ret;
 
     if (b == NULL) {
@@ -282,9 +282,9 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return -1;
     }
-    printf("b->method->name: %s\n", b->method->name);
+    //printf("b->method->name: %s\n", b->method->name);
     ret = b->method->bread(b, data, dlen, readbytes);
-    printf("bio_read_intern, ret: %d\n", ret);
+    //printf("bio_read_intern, ret: %d\n", ret);
 
     if (ret > 0)
         b->num_read += (uint64_t)*readbytes;

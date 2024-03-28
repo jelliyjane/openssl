@@ -71,7 +71,7 @@ typedef struct bio_buf_mem_st {
 
 const BIO_METHOD *BIO_s_mem(void)
 {
-    printf("mem_method\n");
+    //printf("mem_method\n");
     return &mem_method;
 }
 
@@ -82,7 +82,7 @@ const BIO_METHOD *BIO_s_secmem(void)
 
 BIO *BIO_new_mem_buf(const void *buf, int len)
 {
-    printf("BIO_new_mem_buf\n");
+    //printf("BIO_new_mem_buf\n");
     BIO *ret;
     BUF_MEM *b;
     BIO_BUF_MEM *bb;

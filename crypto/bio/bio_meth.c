@@ -113,14 +113,14 @@ int (*BIO_meth_get_read_ex(const BIO_METHOD *biom)) (BIO *, char *, size_t, size
 /* Conversion for old style bread to new style */
 int bread_conv(BIO *bio, char *data, size_t datal, size_t *readbytes)
 {
-    printf("bread_conv\n");
+    //printf("bread_conv\n");
     int ret;
 
     if (datal > INT_MAX)
         datal = INT_MAX;
-    printf("before bread_old\n");
+    //printf("before bread_old\n");
     ret = bio->method->bread_old(bio, data, (int)datal);
-    printf("bread_old: ret %d\n", ret);
+    //printf("bread_old: ret %d\n", ret);
 
     if (ret <= 0) {
         *readbytes = 0;

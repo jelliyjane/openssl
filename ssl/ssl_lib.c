@@ -4756,7 +4756,10 @@ int SSL_do_handshake_reduce(SSL *s)
     printf("start do handshake reduce");
     printf(" : %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
     printf("==============================================\n");
-
+    #ifndef OPENSSL_NO_QUIC
+        if (IS_QUIC(s))
+            return ossl_quic_do_handshake(s);
+    #endif
     int ret = 1;
 
     if (sc->handshake_func == NULL) {
