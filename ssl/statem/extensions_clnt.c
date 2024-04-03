@@ -662,8 +662,8 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
 {
     printf("extensions_clnt: add_key_share_reduce\n");
     unsigned char *encoded_point = NULL;
-    EVP_PKEY *skey =s->s3.peer_tmp, *key_share_key = NULL;
     size_t encodedlen;
+    EVP_PKEY *skey =s->s3.peer_tmp, *key_share_key = NULL;
 
     if(s->s3.peer_tmp != NULL){
         printf("dns based PQC KEM mode\n");
@@ -684,6 +684,7 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
             OPENSSL_free(ct);
             return EXT_RETURN_FAIL;
         }
+        printf("curve_id: %ld \n\n", curve_id);
 
         if (!WPACKET_put_bytes_u16(pkt, curve_id) || !WPACKET_sub_memcpy_u16(pkt, ct, ctlen)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -697,9 +698,22 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
             /* SSLfatal() already called */
             return 0;
         }
+        encodedlen = EVP_PKEY_get1_encoded_public_key(key_share_key,
+                                                  &encoded_point);
+        if (encodedlen == 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EC_LIB);
+            goto err;
+        }
+
+        /* Create KeyShareEntry */
+        if (!WPACKET_put_bytes_u16(pkt, curve_id)
+                || !WPACKET_sub_memcpy_u16(pkt, encoded_point, encodedlen)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
         s->s3.tmp.pkey = key_share_key;
         s->s3.group_id = curve_id;
-
+        OPENSSL_free(encoded_point);
         return 1;
     }
     else if (s->s3.tmp.pkey != NULL) {
