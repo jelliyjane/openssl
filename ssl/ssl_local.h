@@ -1220,6 +1220,7 @@ struct ssl_connection_st {
      * DTLS1_VERSION)
      */
     int version;
+    int DMODE;
     /*
      * There are 2 BIO's even though they are normally both the same.  This
      * is so data can be read and written to different handlers

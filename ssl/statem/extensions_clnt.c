@@ -667,6 +667,7 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
 
     if(s->s3.peer_tmp != NULL){
         printf("dns based PQC KEM mode\n");
+        s->DMODE=1;
         unsigned char *ct = NULL;
         size_t ctlen = 0;
 
@@ -674,7 +675,7 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
         //FILE *f;
         //f = fopen("kyber_pub.pem", "rb");
         //PEM_read_PUBKEY(f, &skey, NULL, NULL);
-        PEM_write_PUBKEY(stdout, skey);
+        //PEM_write_PUBKEY(stdout, skey);
         if(ssl_encapsulate(s, skey, &ct, &ctlen, 0) == 0){
             return EXT_RETURN_FAIL;
         }
@@ -698,6 +699,7 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
             /* SSLfatal() already called */
             return 0;
         }
+        PEM_write_PUBKEY(stdout, key_share_key);
         encodedlen = EVP_PKEY_get1_encoded_public_key(key_share_key,
                                                   &encoded_point);
         if (encodedlen == 0) {
@@ -729,7 +731,7 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
         key_share_key = s->s3.tmp.pkey;
     } else {
         // IMPLEMENT
-//        Log("start tmp NULL\n");
+        printf("tls 1.3 mode add_key_share_reduce\n");
         key_share_key = ssl_generate_pkey_group(s, curve_id);
         if (key_share_key == NULL) {
             /* SSLfatal() already called */

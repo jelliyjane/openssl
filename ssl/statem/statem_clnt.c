@@ -141,14 +141,17 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
                 st->hand_state = TLS_ST_CR_CERT_REQ;
                 return 1;
             }
-            if (mt == SSL3_MT_CERTIFICATE) {
-                printf("mt == SSL3_MT_CERTIFICATE\n");
+            if(s->DMODE==1){
+                printf("DNS MODE\n");
                 st->hand_state = TLS_ST_CR_FINISHED;
                 return 1;
             }
-            printf("mt == SSL3_MT_CERTIFICATE not\n");
-            st->hand_state = TLS_ST_CR_FINISHED;
+            else if (mt == SSL3_MT_CERTIFICATE) {
+                printf("TLS MODE\n");
+                st->hand_state = TLS_ST_CR_CERT;
                 return 1;
+            }
+
 #ifndef OPENSSL_NO_COMP_ALG
             if (mt == SSL3_MT_COMPRESSED_CERTIFICATE
                     && s->ext.compress_certificate_sent) {
@@ -641,6 +644,7 @@ static int do_compressed_cert(SSL_CONNECTION *sc)
  */
 static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
 {
+    printf("\n111ossl_statem_client13_write_transition\n");
     OSSL_STATEM *st = &s->statem;
 
     /*
@@ -924,6 +928,7 @@ WRITE_TRAN ossl_statem_client_write_transition_reduce(SSL_CONNECTION *s) {
      * version we are going to negotiate yet, so we don't take this branch until
      * later
      */
+    printf("\nossl_statem_client_write_transition_reduce\n");
     if (SSL_CONNECTION_IS_TLS13(s)) {
         return ossl_statem_client13_write_transition(s);
     }
