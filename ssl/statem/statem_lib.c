@@ -1229,6 +1229,8 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
         struct timespec receive_stoc;
         clock_gettime(CLOCK_MONOTONIC, &receive_stoc);
         printf(" : %f\n",(receive_stoc.tv_sec) + (receive_stoc.tv_nsec) / 1000000000.0);
+        printf("\n total running time: %f\n", ssl->time);
+        printf("\n total running time: %f\n", ((receive_stoc.tv_sec) + (receive_stoc.tv_nsec) / 1000000000.0) - ssl->time);
         printf("============================================\n");
         *ssl=tmp;
 
