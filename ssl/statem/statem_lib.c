@@ -1222,6 +1222,7 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
         SSL tmp = *ssl;
         // client read application data sent by server
 #include <time.h>
+        struct USER_TIME_INFO* time_info;
         char buf[100];
         SSL_read(ssl, buf, 100);
         printf("============================================\n");
@@ -1229,8 +1230,7 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
         struct timespec receive_stoc;
         clock_gettime(CLOCK_MONOTONIC, &receive_stoc);
         printf(" : %f\n",(receive_stoc.tv_sec) + (receive_stoc.tv_nsec) / 1000000000.0);
-        printf("\n total running time: %f\n", ssl->time);
-        printf("\n total running time: %f\n", ((receive_stoc.tv_sec) + (receive_stoc.tv_nsec) / 1000000000.0) - ssl->time);
+        time_info->appdata_time = (receive_stoc.tv_sec) + (receive_stoc.tv_nsec) / 1000000000.0;
         printf("============================================\n");
         *ssl=tmp;
 

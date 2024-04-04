@@ -1202,7 +1202,6 @@ typedef struct cert_pkey_st CERT_PKEY;
 #define SSL_TYPE_QUIC_XSO        2
 
 struct ssl_st {
-    float time; //for evaluations
     int type;
     SSL_CTX *ctx;
     const SSL_METHOD *defltmeth;
@@ -1211,6 +1210,11 @@ struct ssl_st {
     CRYPTO_RWLOCK *lock;
     /* extra application data */
     CRYPTO_EX_DATA ex_data;
+};
+
+struct USER_TIME_INFO {
+    double appdata_time;
+    double handshake_time;
 };
 
 struct ssl_connection_st {
