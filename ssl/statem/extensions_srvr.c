@@ -1689,6 +1689,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
             OPENSSL_free(encodedPoint);
             return EXT_RETURN_FAIL;
         }
+        
         OPENSSL_free(encodedPoint);
 
         /*
