@@ -561,7 +561,7 @@ static int state_machine_reduce(SSL_CONNECTION *s, int server) {
 //  struct timespec begin;
 //    clock_gettime(CLOCK_MONOTONIC, &begin);
 //    printf("state_machine reduce start");
-//  printf(" : %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
+    //printf(" : %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
     BUF_MEM *buf = NULL;
     void (*cb)(const SSL *ssl, int type, int val) = NULL;
     OSSL_STATEM *st = &s->statem;
@@ -1018,7 +1018,7 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
         max_message_size = ossl_statem_server_max_message_size;
         post_process_message = ossl_statem_server_post_process_message_reduce;
     } else {
-        transition = ossl_statem_client_read_transition_reduce;
+        transition = ossl_statem_client_read_transition;
         process_message = ossl_statem_client_process_message;
         max_message_size = ossl_statem_client_max_message_size;
         post_process_message = ossl_statem_client_post_process_message;
@@ -1183,7 +1183,7 @@ static int statem_do_write(SSL_CONNECTION *s)
     printf("statem_do_write st->hand_state: %d\n", st->hand_state);
     printf("before ws->rlayer.rrl->bio->method->name: %s\n", s->rlayer.rrl->bio->method->name);
     if (st->hand_state == TLS_ST_CW_CHANGE
-        || st->hand_state == TLS_ST_SW_CHANGE|| st->hand_state == TLS_ST_CW_DNS_CCS) {
+        || st->hand_state == TLS_ST_SW_CHANGE) {
         if (SSL_CONNECTION_IS_DTLS(s))
             return dtls1_do_write(s, SSL3_RT_CHANGE_CIPHER_SPEC);
         else{
@@ -1417,7 +1417,7 @@ static SUB_STATE_RETURN write_state_machine_reduce(SSL_CONNECTION *s) {
         post_work = ossl_statem_server_post_work_reduce;
         get_construct_message_f = ossl_statem_server_construct_message;
     } else if (!s->server) {
-        transition = ossl_statem_client_write_transition_reduce;
+        transition = ossl_statem_client_write_transition;
         pre_work = ossl_statem_client_pre_work_reduce;
         post_work = ossl_statem_client_post_work_reduce;
         get_construct_message_f = ossl_statem_client_construct_message;

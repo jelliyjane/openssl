@@ -640,8 +640,9 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
-        if(type == 53){
-            s->early_data_state = SSL_DNS_CCS;
+        if(type == 65280){
+            printf("is the extension type 53\n");
+            s->DMODE=1;
         }
         /*
          * Verify this extension is allowed. We only check duplicates for

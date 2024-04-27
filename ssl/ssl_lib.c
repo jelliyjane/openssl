@@ -1729,8 +1729,8 @@ int SSL_set_wfd(SSL *s, int fd)
 //        SSL_set0_wbio(s, rbio);
 //    }
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-    if(fd == 1)
-        sc->early_data_state = SSL_DNS_CCS;
+    //if(fd == 1)
+        //sc->early_data_state = SSL_DNS_CCS;
 
     return 2;
 }

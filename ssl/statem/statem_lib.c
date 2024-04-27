@@ -696,6 +696,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     }
 
     pkey = tls_get_peer_pkey(s);
+    
     if (pkey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -1392,8 +1393,13 @@ EVP_PKEY* tls_get_peer_pkey(const SSL_CONNECTION *sc)
 {
     if (sc->session->peer_rpk != NULL)
         return sc->session->peer_rpk;
-    if (sc->session->peer != NULL)
+    if (sc->session->peer != NULL){
+        printf("sc->session->peer != NULL\n");
         return X509_get0_pubkey(sc->session->peer);
+    }
+    else{
+        printf("sc->session->peer != NULLdd\n");
+    }
     return NULL;
 }
 

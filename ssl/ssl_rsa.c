@@ -46,13 +46,15 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
         ERR_raise(ERR_LIB_SSL, rv);
         return 0;
     }
-    if(sc->early_data_state == SSL_DNS_CCS){
-        printf("load the Server's Certificate ");
+    //if(sc->early_data_state == SSL_DNS_CCS){
+        printf("load the Server's Certificate \n");
+        PEM_write_X509(stdout, x);
         struct timespec begin;
         clock_gettime(CLOCK_MONOTONIC, &begin);
         printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
         STACK_OF(X509)* tmp;
         sc->session = SSL_SESSION_new();
+        sc->session->peer = x;
 
         sc->session->peer_chain = (STACK_OF(X509)*)sk_X509_new_null();
         if (sc->session->peer_chain == NULL) {
@@ -75,7 +77,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
             clock_gettime(CLOCK_MONOTONIC, &begin);
             printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
 
-    }
+    //}
 
     return ssl_set_cert(sc->cert, x, SSL_CONNECTION_GET_CTX(sc));
 }

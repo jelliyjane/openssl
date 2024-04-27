@@ -101,6 +101,7 @@ static int key_exchange_expected(SSL_CONNECTION *s)
 static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
+    printf("ossl_statem_client13_read_transition: st->hand_state: %d\n",st->hand_state);
 
     /*
      * Note: There is no case for TLS_ST_CW_CLNT_HELLO, because we haven't
@@ -141,9 +142,10 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
                 st->hand_state = TLS_ST_CR_CERT_REQ;
                 return 1;
             }
-            if(s->DMODE==1){
+            if(mt != SSL3_MT_CERTIFICATE){
                 printf("DNS MODE\n");
-                st->hand_state = TLS_ST_CR_FINISHED;
+                s->DMODE=1;
+                st->hand_state = TLS_ST_CR_CERT_VRFY;
                 return 1;
             }
             else if (mt == SSL3_MT_CERTIFICATE) {

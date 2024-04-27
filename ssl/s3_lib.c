@@ -4949,6 +4949,8 @@ int ssl_decapsulate(SSL_CONNECTION *s, EVP_PKEY *privkey,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    printf("decap pms: %s\n", pms);
+    printf("decap pmslen: %ld\n", pmslen);
 
     if (gensecret) {
         /* SSLfatal() called as appropriate in the below functions */

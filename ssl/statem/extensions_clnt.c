@@ -665,60 +665,7 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
     size_t encodedlen;
     EVP_PKEY *skey =s->s3.peer_tmp, *key_share_key = NULL;
 
-    if(s->s3.peer_tmp != NULL){
-        printf("dns based PQC KEM mode\n");
-        s->DMODE=1;
-        unsigned char *ct = NULL;
-        size_t ctlen = 0;
-
-        //EVP_PKEY *skey = NULL;
-        //FILE *f;
-        //f = fopen("kyber_pub.pem", "rb");
-        //PEM_read_PUBKEY(f, &skey, NULL, NULL);
-        //PEM_write_PUBKEY(stdout, skey);
-        if(ssl_encapsulate(s, skey, &ct, &ctlen, 0) == 0){
-            return EXT_RETURN_FAIL;
-        }
-
-        if (ctlen == 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            OPENSSL_free(ct);
-            return EXT_RETURN_FAIL;
-        }
-        printf("curve_id: %ld \n\n", curve_id);
-
-        if (!WPACKET_put_bytes_u16(pkt, curve_id) || !WPACKET_sub_memcpy_u16(pkt, ct, ctlen)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            OPENSSL_free(ct);
-            return EXT_RETURN_FAIL;
-        }
-        OPENSSL_free(ct);
-
-        key_share_key = ssl_generate_pkey_group(s, curve_id);
-        if (key_share_key == NULL) {
-            /* SSLfatal() already called */
-            return 0;
-        }
-        PEM_write_PUBKEY(stdout, key_share_key);
-        encodedlen = EVP_PKEY_get1_encoded_public_key(key_share_key,
-                                                  &encoded_point);
-        if (encodedlen == 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EC_LIB);
-            goto err;
-        }
-
-        /* Create KeyShareEntry */
-        if (!WPACKET_put_bytes_u16(pkt, curve_id)
-                || !WPACKET_sub_memcpy_u16(pkt, encoded_point, encodedlen)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-        s->s3.tmp.pkey = key_share_key;
-        s->s3.group_id = curve_id;
-        OPENSSL_free(encoded_point);
-        return 1;
-    }
-    else if (s->s3.tmp.pkey != NULL) {
+    if (s->s3.tmp.pkey != NULL) {
         // NOT
 //        Log("start\n");
         if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING)) {
@@ -2020,10 +1967,10 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         printf("decapsulate for ct: %s\n", ct);
         printf("decapsulate for ctlen: %d\n", ctlen);
 
-        //if (ssl_decapsulate(s, ckey, ct, ctlen, 1) == 0) {
+        if (ssl_decapsulate(s, ckey, ct, ctlen, 0) == 0) {
             /* SSLfatal() already called */
-        //    return 0;
-        //}
+            return 0;
+        }
     }
     s->s3.did_kex = 1;
 #endif
