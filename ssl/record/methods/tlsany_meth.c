@@ -43,7 +43,7 @@ static int tls_any_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
 
 static int tls_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
-    printf("tls_validate_record_header\n");
+//    printf("tls_validate_record_header\n");
     if (rec->rec_version == SSL2_VERSION) {
         /* SSLv2 format ClientHello */
         if (!ossl_assert(rl->version == TLS_ANY_VERSION)) {

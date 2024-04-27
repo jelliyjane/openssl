@@ -3765,7 +3765,7 @@ int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     if(sc->early_data_state == SSL_DNS_CCS){// if ZTLS
         // load session->peer
         early_process_cert_verify(sc, out, context, contextlen);
-        printf("SSL_export_keying_material2, sc->rlayer.wpend_tot: %d\n",sc->rlayer.wpend_tot);
+//        printf("SSL_export_keying_material2, sc->rlayer.wpend_tot: %d\n",sc->rlayer.wpend_tot);
     }else{
 
         if (sc->session == NULL

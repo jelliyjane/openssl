@@ -48,7 +48,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
     }
     //if(sc->early_data_state == SSL_DNS_CCS){
         printf("load the Server's Certificate \n");
-        PEM_write_X509(stdout, x);
+        //PEM_write_X509(stdout, x);
         struct timespec begin;
         clock_gettime(CLOCK_MONOTONIC, &begin);
         printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
@@ -56,7 +56,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
         sc->session = SSL_SESSION_new();
         sc->session->peer = x;
         sc->ebox_cert = X509_dup(x);
-        
+
         sc->session->peer_chain = (STACK_OF(X509)*)sk_X509_new_null();
         if (sc->session->peer_chain == NULL) {
             SSLfatal(SSL_CONNECTION_GET_SSL(sc), SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
@@ -69,7 +69,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
         if (!sk_X509_push(sc->session->peer_chain, x)) {
             SSLfatal(SSL_CONNECTION_GET_SSL(sc), SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
         }
-        printf("sc->session->peer_chain is null: %d\n", sc->session->peer_chain == NULL);
+       // printf("sc->session->peer_chain is null: %d\n", sc->session->peer_chain == NULL);
         if (ssl_verify_cert_chain(sc, sc->session->peer_chain) <= 0) {
             printf("not correct cert chain ");
             clock_gettime(CLOCK_MONOTONIC, &begin);
@@ -196,7 +196,7 @@ int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey)
         sc->s3.peer_tmp = pkey;
         return 1;
     }else{
-        printf("ssl_set_pkey is running\n");
+       // printf("ssl_set_pkey is running\n");
         ret = ssl_set_pkey(sc->cert, pkey, SSL_CONNECTION_GET_CTX(sc));
     }
     return ret;

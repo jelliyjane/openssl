@@ -622,9 +622,9 @@ static int state_machine_reduce(SSL_CONNECTION *s, int server) {
 
         // NOT
         if (cb != NULL) {
-            printf("cb(call back)이 NULL이 아니다.\n");
+         //   printf("cb(call back)이 NULL이 아니다.\n");
             if (SSL_IS_FIRST_HANDSHAKE(s) || !SSL_CONNECTION_IS_TLS13(s)) {
-                printf("cb(call back)를 세팅하네.\n");
+         //       printf("cb(call back)를 세팅하네.\n");
                 cb(ssl, SSL_CB_HANDSHAKE_START, 1);
             }
         }
@@ -1094,8 +1094,8 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
                                     //printf("    read message body in read_state_machine func\n");
                     ret = tls_get_message_body(s, &len);
                     //printf("msg body s->rlayer.rrl->prev != NULL : %d\n", (s->rlayer.rrl->prev) != NULL );
-                    printf("len: %ld\n",len);
-                    printf("after get message body\n");
+//                    printf("len: %ld\n",len);
+//                    printf("after get message body\n");
                 }
                 if (ret == 0) {
                     /* Could be non-blocking IO */
@@ -1180,8 +1180,8 @@ static int statem_do_write(SSL_CONNECTION *s)
 {
     OSSL_STATEM *st = &s->statem;
 
-    printf("statem_do_write st->hand_state: %d\n", st->hand_state);
-    printf("before ws->rlayer.rrl->bio->method->name: %s\n", s->rlayer.rrl->bio->method->name);
+//    printf("statem_do_write st->hand_state: %d\n", st->hand_state);
+//    printf("before ws->rlayer.rrl->bio->method->name: %s\n", s->rlayer.rrl->bio->method->name);
     if (st->hand_state == TLS_ST_CW_CHANGE
         || st->hand_state == TLS_ST_SW_CHANGE) {
         if (SSL_CONNECTION_IS_DTLS(s))
@@ -1425,11 +1425,11 @@ static SUB_STATE_RETURN write_state_machine_reduce(SSL_CONNECTION *s) {
 
     struct timespec begin;
     while (1) {
-        printf("   sst->write_state: %d\n", st->write_state);
-        printf("   s->early_data_state: %d\n",s->early_data_state);
+//        printf("   sst->write_state: %d\n", st->write_state);
+ //       printf("   s->early_data_state: %d\n",s->early_data_state);
         switch (st->write_state) {
             case WRITE_STATE_TRANSITION:
-                            printf("   WRITE_STATE_TRANSITION in write_state_machine func \n");
+//                            printf("   WRITE_STATE_TRANSITION in write_state_machine func \n");
                 if (cb != NULL) {
                     /* Notify callback of an impending state change */
                     if (s->server)
@@ -1511,7 +1511,7 @@ static SUB_STATE_RETURN write_state_machine_reduce(SSL_CONNECTION *s) {
                 clock_gettime(CLOCK_MONOTONIC, &begin);
                 printf("   (WRITE) hand_state -> %s", SSL_state_string_long(ssl));
                 printf(" : %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
-                            printf("   WRITE_STATE_SEND in write_state_machine func \n");
+//                            printf("   WRITE_STATE_SEND in write_state_machine func \n");
                 if (SSL_CONNECTION_IS_DTLS(s) && st->use_timer) {
                     dtls1_start_timer(s);
                 }
@@ -1534,7 +1534,7 @@ static SUB_STATE_RETURN write_state_machine_reduce(SSL_CONNECTION *s) {
                         return SUB_STATE_ERROR;
 
                     case WORK_FINISHED_CONTINUE:
-                                    printf("   WRITE_FINSIHED_CONTINUE in write_state_machine func \n");
+//                                    printf("   WRITE_FINSIHED_CONTINUE in write_state_machine func \n");
                             st->write_state = WRITE_STATE_TRANSITION;
                         break;
 

@@ -660,7 +660,7 @@ static int add_key_share(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
 #ifndef OPENSSL_NO_TLS1_3
 static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int curve_id)
 {
-    printf("extensions_clnt: add_key_share_reduce\n");
+    //printf("extensions_clnt: add_key_share_reduce\n");
     unsigned char *encoded_point = NULL;
     size_t encodedlen;
     EVP_PKEY *skey =s->s3.peer_tmp, *key_share_key = NULL;
@@ -678,7 +678,7 @@ static int add_key_share_reduce(SSL_CONNECTION *s, WPACKET *pkt, unsigned int cu
         key_share_key = s->s3.tmp.pkey;
     } else {
         // IMPLEMENT
-        printf("tls 1.3 mode add_key_share_reduce\n");
+        //printf("tls 1.3 mode add_key_share_reduce\n");
         key_share_key = ssl_generate_pkey_group(s, curve_id);
         if (key_share_key == NULL) {
             /* SSLfatal() already called */
@@ -766,7 +766,7 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         /* SSLfatal() already called */
         return EXT_RETURN_FAIL;
     }
-    printf("end add key share reduce\n");
+    //printf("end add key share reduce\n");
 
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1830,7 +1830,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
                              unsigned int context, X509 *x,
                              size_t chainidx)
 {
-    printf("tls_parse_stoc_key_share\n");
+   // printf("tls_parse_stoc_key_share\n");
 #ifndef OPENSSL_NO_TLS1_3
     unsigned int group_id;
     PACKET encoded_pt;
@@ -1848,7 +1848,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    printf("groud_id: %d\n", group_id);
+  //  printf("group_id: %d\n", group_id);
 
     if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
         const uint16_t *pgroups = NULL;
@@ -1964,8 +1964,8 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         /* KEM Mode */
         const unsigned char *ct = PACKET_data(&encoded_pt);
         size_t ctlen = PACKET_remaining(&encoded_pt);
-        printf("decapsulate for ct: %s\n", ct);
-        printf("decapsulate for ctlen: %d\n", ctlen);
+//        printf("decapsulate for ct: %s\n", ct);
+//        printf("decapsulate for ctlen: %d\n", ctlen);
 
         if (ssl_decapsulate(s, ckey, ct, ctlen, 0) == 0) {
             /* SSLfatal() already called */

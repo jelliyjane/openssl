@@ -475,11 +475,11 @@ int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
 
     STACK_OF(X509) *r;
     if (s == NULL){
-        printf("s is null\n");
+    //    printf("s is null\n");
         return NULL;
     }
     if (s->session == NULL){
-        printf("s->session is null\n");
+    //   printf("s->session is null\n");
         r = NULL;
     }
     else
@@ -496,13 +496,13 @@ int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
     if (pkey == NULL || EVP_PKEY_missing_parameters(pkey)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
-        printf("error\n");
+        //printf("error\n");
     }
     //PEM_write_PUBKEY(stdout, pkey);
     SSL* ssl = SSL_CONNECTION_GET_SSL(s);
     if ((clu = ssl_cert_lookup_by_pkey(pkey, &certidx, ssl->ctx)) == NULL) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-        printf("error2\n");
+        //printf("error2\n");
     }
 
     /*
@@ -522,7 +522,7 @@ int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
     pkey = X509_get0_pubkey(peer);
     if (pkey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        printf("error3\n");
+        //printf("error3\n");
     }
     outbio  = BIO_new(BIO_s_mem());
     PEM_write_bio_PUBKEY( outbio, pkey );
@@ -696,9 +696,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     }
 
     if(s->DMODE == 1){ 
-        printf("is it move?\n");
         if(s->ebox_cert != NULL){
-            PEM_write_X509(stdout, s->ebox_cert);
             s->session->peer = X509_dup(s->ebox_cert);
         }else{
             printf("ebox_cert is null\n\n");
@@ -707,7 +705,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     }
 
 
-    printf("s->session->peer_rpk != NULL: %d\n",s->session->peer_rpk != NULL);
+ //   printf("s->session->peer_rpk != NULL: %d\n",s->session->peer_rpk != NULL);
 
 
 
@@ -718,6 +716,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
+ 
     if (ssl_cert_lookup_by_pkey(pkey, NULL, sctx) == NULL) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE);
@@ -1147,9 +1146,9 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
         return MSG_PROCESS_ERROR;
     }
     
-    printf("md_len: %ld\n", md_len);
-    printf("PACKET_data(pkt): %s\n", PACKET_data(pkt));
-    printf("s->s3.tmp.peer_finish_md: %s\n", s->s3.tmp.peer_finish_md);
+  //  printf("md_len: %ld\n", md_len);
+  //  printf("PACKET_data(pkt): %s\n", PACKET_data(pkt));
+  //  printf("s->s3.tmp.peer_finish_md: %s\n", s->s3.tmp.peer_finish_md);
 
     ok = CRYPTO_memcmp(PACKET_data(pkt), s->s3.tmp.peer_finish_md,
                        md_len);
@@ -1411,13 +1410,13 @@ EVP_PKEY* tls_get_peer_pkey(const SSL_CONNECTION *sc)
     if (sc->session->peer_rpk != NULL)
         return sc->session->peer_rpk;
     if (sc->session->peer != NULL){
-        printf("sc->session->peer != NULL\n");
+    //    printf("sc->session->peer != NULL\n");
         return X509_get_pubkey(sc->session->peer);
     }else if(sc->session->peer_chain != NULL){
-        printf("sc->session->peer_chain != NULL\n");
+    //    printf("sc->session->peer_chain != NULL\n");
         return X509_get_pubkey(sc->session->peer_chain);
     }else{
-        printf("sc->session->peer != NULLdd\n");
+    //    printf("sc->session->peer != NULLdd\n");
     }
     return NULL;
 }

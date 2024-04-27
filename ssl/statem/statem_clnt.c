@@ -101,7 +101,7 @@ static int key_exchange_expected(SSL_CONNECTION *s)
 static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
-    printf("ossl_statem_client13_read_transition: st->hand_state: %d\n",st->hand_state);
+//    printf("ossl_statem_client13_read_transition: st->hand_state: %d\n",st->hand_state);
 
     /*
      * Note: There is no case for TLS_ST_CW_CLNT_HELLO, because we haven't
@@ -143,7 +143,7 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
                 return 1;
             }
             if(mt != SSL3_MT_CERTIFICATE){
-                printf("DNS MODE\n");
+                printf("FastPQDelivery MODE\n");
                 s->DMODE=1;
                 st->hand_state = TLS_ST_CR_CERT_VRFY;
                 return 1;
@@ -646,7 +646,7 @@ static int do_compressed_cert(SSL_CONNECTION *sc)
  */
 static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
 {
-    printf("\n111ossl_statem_client13_write_transition\n");
+ //   printf("\n111ossl_statem_client13_write_transition\n");
     OSSL_STATEM *st = &s->statem;
 
     /*
@@ -930,7 +930,7 @@ WRITE_TRAN ossl_statem_client_write_transition_reduce(SSL_CONNECTION *s) {
      * version we are going to negotiate yet, so we don't take this branch until
      * later
      */
-    printf("\nossl_statem_client_write_transition_reduce\n");
+//    printf("\nossl_statem_client_write_transition_reduce\n");
     if (SSL_CONNECTION_IS_TLS13(s)) {
         return ossl_statem_client13_write_transition(s);
     }
@@ -1190,7 +1190,7 @@ WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
 
 WORK_STATE ossl_statem_client_pre_work_reduce(SSL_CONNECTION *s, WORK_STATE wst) {
     OSSL_STATEM *st = &s->statem;
-    printf("      prework st->hand_state: %d\n", st->hand_state);
+//    printf("      prework st->hand_state: %d\n", st->hand_state);
     switch (st->hand_state) {
         default:
             /* No pre work to be done */
@@ -1398,7 +1398,7 @@ WORK_STATE ossl_statem_client_post_work_reduce(SSL_CONNECTION *s, WORK_STATE wst
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     s->init_num = 0;
-printf("      post_work st->hand_state: %d\n", st->hand_state);
+//printf("      post_work st->hand_state: %d\n", st->hand_state);
     switch (st->hand_state) {
         default:
             /* No post work to be done */
@@ -1471,7 +1471,7 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
 
                 // assign client's ecdhe private key and server public key
                 //printf("      assign client's ecdhe private key and server public key\n");
-                printf("      assign client's kyber private key and server public key\n");
+//                printf("      assign client's kyber private key and server public key\n");
                 //EVP_PKEY *ckey = NULL, *skey = NULL;
                 //ckey = s->s3.tmp.pkey;
                 //skey = s->s3.peer_tmp;
@@ -1554,11 +1554,11 @@ printf("      post_work st->hand_state: %d\n", st->hand_state);
                     /* SSLfatal() already called */
                     return WORK_ERROR;
 
-                printf("s->master_secret: \n");
-                puts(s->master_secret);
-                printf("s->handshake_secret: \n");
-                puts(s->handshake_secret);
-                printf("%d\n", strcmp(s->master_secret, s->handshake_secret));
+//                printf("s->master_secret: \n");
+//                puts(s->master_secret);
+//                printf("s->handshake_secret: \n");
+//                puts(s->handshake_secret);
+//                printf("%d\n", strcmp(s->master_secret, s->handshake_secret));
                 // send the application data encrypted by client traffic key to the server side
                 char message[100] = "hello";
 

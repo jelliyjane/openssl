@@ -292,7 +292,7 @@ static int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
 int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                        int clearold, size_t *readbytes)
 {
-    printf("tls_default_read_n\n");
+//    printf("tls_default_read_n\n");
     /*
      * If extend == 0, obtain new n-byte packet; if extend == 1, increase
      * packet by another n bytes. The packet will be in the sub-array of
@@ -385,12 +385,12 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
     }
 
     while (left < n) {
-        printf("11111\n");
+ //       printf("11111\n");
         size_t bioread = 0;
         int ret;
-        printf("rl->prev != NULL : %d\n", (rl->prev) != NULL );
+  //      printf("rl->prev != NULL : %d\n", (rl->prev) != NULL );
         BIO *bio = rl->prev != NULL ? rl->prev : rl->bio;
-        printf("bio>method->name : %s\n", (bio->method->name ));
+ //       printf("bio>method->name : %s\n", (bio->method->name ));
         
         /*
          * Now we have len+left bytes at the front of rl->rbuf.buf and
@@ -399,20 +399,20 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
          */
 
         clear_sys_error();
-        printf("2\n");
+//        printf("2\n");
         if (bio != NULL) {
-            printf("3\n");
-            printf("max: %ld\n",max);
+//            printf("3\n");
+//            printf("max: %ld\n",max);
             //printf("left: %ld\n",left);
             //printf("max - left: %ld\n",max - left);
             //printf("\nbio->method->name: %s\n", bio->method->name);
             ret = BIO_read(bio, pkt + len + left, max - left);
             if (ret > 0) {
-                printf("4\n");
+//                printf("4\n");
                 bioread = ret;
                 ret = OSSL_RECORD_RETURN_SUCCESS;
             } else if (BIO_should_retry(bio)) {
-                printf("5\n");
+//                printf("5\n");
                 if (rl->prev != NULL) {
                     /*
                      * We were reading from the previous epoch. Now there is no
@@ -582,7 +582,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
         /* check if we have the header */
         if ((rl->rstate != SSL_ST_READ_BODY) ||
             (rl->packet_length < SSL3_RT_HEADER_LENGTH)) {
-            printf("a\n");
+//            printf("a\n");
             size_t sslv2len;
             unsigned int type;
             //printf("TLS_BUFFER_get_len(rbuf): %ld\n", TLS_BUFFER_get_len(rbuf));
@@ -600,10 +600,10 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return OSSL_RECORD_RETURN_FATAL;
             }
-            printf("b\n");
+//            printf("b\n");
             sslv2pkt = pkt;
             PACKET_get_1(&sslv2pkt, &type);
-            printf("tttype: %d\n", type);
+//            printf("tttype: %d\n", type);
             if (!PACKET_get_net_2_len(&sslv2pkt, &sslv2len)
                     || !PACKET_get_1(&sslv2pkt, &type)) {
                 RLAYERfatal(rl, SSL_AD_DECODE_ERROR, ERR_R_INTERNAL_ERROR);
@@ -651,8 +651,8 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
                 }
                 thisrr->type = type;
                 thisrr->rec_version = version;
-                printf("type: %d\n", type);
-                printf("version: %d\n", version);
+//                printf("type: %d\n", type);
+//                printf("version: %d\n", version);
 
                 /*
                  * When we call validate_record_header() only records actually
@@ -746,7 +746,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
              && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(rl->enc_ctx))
                  & EVP_CIPH_FLAG_PIPELINE) != 0
              && tls_record_app_data_waiting(rl));
-    printf("thisrr->type: %d\n", thisrr->type);
+//    printf("thisrr->type: %d\n", thisrr->type);
     if (num_recs == 1
             && thisrr->type == SSL3_RT_CHANGE_CIPHER_SPEC
                /* The following can happen in tlsany_meth after HRR */
@@ -1399,7 +1399,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                      const OSSL_DISPATCH *fns, void *cbarg, void *rlarg,
                      OSSL_RECORD_LAYER **retrl)
 {
-    printf("tls_new_record_layer\n");
+//    printf("tls_new_record_layer\n");
     int ret;
 
     ret = tls_int_new_record_layer(libctx, propq, vers, role, direction, level,
@@ -1411,7 +1411,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     if (ret != OSSL_RECORD_RETURN_SUCCESS)
         return ret;
 
-    printf("vers: %d\n",vers);
+//    printf("vers: %d\n",vers);
     switch (vers) {
     case TLS_ANY_VERSION:
         (*retrl)->funcs = &tls_any_funcs;

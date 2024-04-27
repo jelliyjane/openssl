@@ -135,7 +135,7 @@ int bread_conv(BIO *bio, char *data, size_t datal, size_t *readbytes)
 int BIO_meth_set_read(BIO_METHOD *biom,
                       int (*bread) (BIO *, char *, int))
 {
-    printf("BIO_meth_set_read\n");
+//    printf("BIO_meth_set_read\n");
     biom->bread_old = bread;
     biom->bread = bread_conv;
     return 1;
@@ -144,7 +144,7 @@ int BIO_meth_set_read(BIO_METHOD *biom,
 int BIO_meth_set_read_ex(BIO_METHOD *biom,
                          int (*bread) (BIO *, char *, size_t, size_t *))
 {
-    printf("BIO_meth_set_read_ex\n");
+//    printf("BIO_meth_set_read_ex\n");
     biom->bread_old = NULL;
     biom->bread = bread;
     return 1;

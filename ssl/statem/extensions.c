@@ -641,7 +641,7 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
             goto err;
         }
         if(type == 65280){
-            printf("is the extension type 53\n");
+            //printf("is the extension type 53\n");
             s->DMODE=1;
         }
         /*

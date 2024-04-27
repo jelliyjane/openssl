@@ -304,7 +304,7 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
 
 int BIO_read(BIO *b, void *data, int dlen)
 {
-    printf("BIO_read\n");
+    //printf("BIO_read\n");
     size_t readbytes;
     int ret;
 

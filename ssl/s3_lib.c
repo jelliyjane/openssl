@@ -4949,8 +4949,8 @@ int ssl_decapsulate(SSL_CONNECTION *s, EVP_PKEY *privkey,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    printf("decap pms: %s\n", pms);
-    printf("decap pmslen: %ld\n", pmslen);
+//    printf("decap pms: %s\n", pms);
+//    printf("decap pmslen: %ld\n", pmslen);
 
     if (gensecret) {
         /* SSLfatal() called as appropriate in the below functions */
@@ -5004,10 +5004,10 @@ int ssl_encapsulate(SSL_CONNECTION *s, EVP_PKEY *pubkey,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    printf("\nencap ct: %s\n",ct);
-    printf("encap ctlen: %ld\n", ctlen);
-    printf("encap pms: %s\n", pms);
-    printf("encap pmslen: %ld\n", pmslen);
+//    printf("\nencap ct: %s\n",ct);
+//    printf("encap ctlen: %ld\n", ctlen);
+//    printf("encap pms: %s\n", pms);
+//    printf("encap pmslen: %ld\n", pmslen);
 
     if (gensecret) {
         /* SSLfatal() called as appropriate in the below functions */

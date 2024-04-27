@@ -497,7 +497,7 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     } else {
         i = X509_verify_cert(ctx);
         /* We treat an error in the same way as a failure to verify */
-        printf("X509_verify_cert res: %d\n",i );
+//        printf("X509_verify_cert res: %d\n",i );
         if (i < 0)
             i = 0;
     }
