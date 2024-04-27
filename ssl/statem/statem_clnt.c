@@ -2675,6 +2675,8 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
         goto err;
     }
     */
+
+
     if ((s->session->peer_chain = sk_X509_new_null()) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         goto err;
@@ -2798,7 +2800,8 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
      */
     x = sk_X509_value(s->session->peer_chain, 0);
 
-    pkey = X509_get0_pubkey(x);
+    //pkey = X509_get0_pubkey(x);
+    pkey = X509_get_pubkey(x);
 
     if (pkey == NULL || EVP_PKEY_missing_parameters(pkey)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,

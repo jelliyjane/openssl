@@ -438,13 +438,15 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
         verify_store = sctx->cert_store;
 
     ctx = X509_STORE_CTX_new_ex(sctx->libctx, sctx->propq);
-    if (ctx == NULL) {
+    if (ctx == NULL) {;
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         return 0;
     }
 
     if (sk != NULL) {
         x = sk_X509_value(sk, 0);
+       // printf("pem to X \n\n");
+       // PEM_write_X509(stdout, x);
         if (!X509_STORE_CTX_init(ctx, verify_store, x, sk)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
             goto end;
@@ -495,6 +497,7 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     } else {
         i = X509_verify_cert(ctx);
         /* We treat an error in the same way as a failure to verify */
+        printf("X509_verify_cert res: %d\n",i );
         if (i < 0)
             i = 0;
     }

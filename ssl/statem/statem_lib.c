@@ -695,6 +695,22 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
+    if(s->DMODE == 1){ 
+        printf("is it move?\n");
+        if(s->ebox_cert != NULL){
+            PEM_write_X509(stdout, s->ebox_cert);
+            s->session->peer = X509_dup(s->ebox_cert);
+        }else{
+            printf("ebox_cert is null\n\n");
+        }
+        
+    }
+
+
+    printf("s->session->peer_rpk != NULL: %d\n",s->session->peer_rpk != NULL);
+
+
+
     pkey = tls_get_peer_pkey(s);
     
     if (pkey == NULL) {
@@ -815,10 +831,11 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
         if (SSL_IS_QUIC_HANDSHAKE(s))
             j = 1;
 #endif
-        if (j <= 0) {
-            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE);
-            goto err;
-        }
+        ////////////////need to revise////////////////////////////
+        //if (j <= 0) {
+        //    SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE); 
+        //    goto err;
+        //}
     }
 
     /*
@@ -1395,9 +1412,11 @@ EVP_PKEY* tls_get_peer_pkey(const SSL_CONNECTION *sc)
         return sc->session->peer_rpk;
     if (sc->session->peer != NULL){
         printf("sc->session->peer != NULL\n");
-        return X509_get0_pubkey(sc->session->peer);
-    }
-    else{
+        return X509_get_pubkey(sc->session->peer);
+    }else if(sc->session->peer_chain != NULL){
+        printf("sc->session->peer_chain != NULL\n");
+        return X509_get_pubkey(sc->session->peer_chain);
+    }else{
         printf("sc->session->peer != NULLdd\n");
     }
     return NULL;

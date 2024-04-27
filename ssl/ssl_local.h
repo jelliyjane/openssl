@@ -1221,6 +1221,7 @@ struct ssl_connection_st {
      */
     int version;
     int DMODE;
+    X509 *ebox_cert;
     /*
      * There are 2 BIO's even though they are normally both the same.  This
      * is so data can be read and written to different handlers

@@ -55,7 +55,8 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
         STACK_OF(X509)* tmp;
         sc->session = SSL_SESSION_new();
         sc->session->peer = x;
-
+        sc->ebox_cert = X509_dup(x);
+        
         sc->session->peer_chain = (STACK_OF(X509)*)sk_X509_new_null();
         if (sc->session->peer_chain == NULL) {
             SSLfatal(SSL_CONNECTION_GET_SSL(sc), SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
@@ -68,6 +69,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
         if (!sk_X509_push(sc->session->peer_chain, x)) {
             SSLfatal(SSL_CONNECTION_GET_SSL(sc), SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
         }
+        printf("sc->session->peer_chain is null: %d\n", sc->session->peer_chain == NULL);
         if (ssl_verify_cert_chain(sc, sc->session->peer_chain) <= 0) {
             printf("not correct cert chain ");
             clock_gettime(CLOCK_MONOTONIC, &begin);

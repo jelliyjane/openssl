@@ -234,6 +234,7 @@ static int verify_rpk(X509_STORE_CTX *ctx)
  */
 static int verify_chain(X509_STORE_CTX *ctx)
 {
+    printf("verify_chain\n");
     int err;
     int ok;
 
@@ -242,8 +243,11 @@ static int verify_chain(X509_STORE_CTX *ctx)
         || (ok = check_auth_level(ctx)) <= 0
         || (ok = check_id(ctx)) <= 0
         || (ok = X509_get_pubkey_parameters(NULL, ctx->chain) ? 1 : -1) <= 0
-        || (ok = ctx->check_revocation(ctx)) <= 0)
+        || (ok = ctx->check_revocation(ctx)) <= 0){
+        printf("ok; %d\n",ok);
         return ok;
+    }
+        
 
     err = X509_chain_check_suiteb(&ctx->error_depth, NULL, ctx->chain,
                                   ctx->param->flags);
@@ -327,6 +331,7 @@ static int x509_verify_rpk(X509_STORE_CTX *ctx)
  */
 static int x509_verify_x509(X509_STORE_CTX *ctx)
 {
+    printf("x509_verify_x509\n");
     int ret;
 
     if (ctx->cert == NULL) {
@@ -364,6 +369,7 @@ static int x509_verify_x509(X509_STORE_CTX *ctx)
      */
     if (ret <= 0 && ctx->error == X509_V_OK)
         ctx->error = X509_V_ERR_UNSPECIFIED;
+    printf("x509_verify_x509 ret: %d\n", ret);
     return ret;
 }
 
@@ -1812,6 +1818,7 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
  */
 static int internal_verify(X509_STORE_CTX *ctx)
 {
+    printf("internal_verify\n");
     int n;
     X509 *xi;
     X509 *xs;
@@ -2061,6 +2068,7 @@ ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
 /* Copy any missing public key parameters up the chain towards pkey */
 int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 {
+    printf("get pubkey\n");
     EVP_PKEY *ktmp = NULL, *ktmp2;
     int i, j;
 
@@ -2068,7 +2076,9 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
         return 1;
 
     for (i = 0; i < sk_X509_num(chain); i++) {
-        ktmp = X509_get0_pubkey(sk_X509_value(chain, i));
+       
+        ktmp = X509_get_pubkey(sk_X509_value(chain, i));
+        //ktmp = X509_get0_pubkey(sk_X509_value(chain, i));
         if (ktmp == NULL) {
             ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
             return 0;
@@ -2084,9 +2094,12 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 
     /* first, populate the other certs */
     for (j = i - 1; j >= 0; j--) {
-        ktmp2 = X509_get0_pubkey(sk_X509_value(chain, j));
-        if (!EVP_PKEY_copy_parameters(ktmp2, ktmp))
+        ktmp2 = X509_get_pubkey(sk_X509_value(chain, j));
+       // ktmp2 = X509_get0_pubkey(sk_X509_value(chain, j));
+        if (!EVP_PKEY_copy_parameters(ktmp2, ktmp)){
+            printf("ktmp2\n");
             return 0;
+        }
     }
 
     if (pkey != NULL)
