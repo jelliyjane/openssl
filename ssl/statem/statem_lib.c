@@ -450,7 +450,7 @@ void Base64Decode(const char* b64message, unsigned char** buffer, size_t* length
     BIO_free_all(bio);
 }
 
-//ZTLS function
+//ExpressPQDelivery function
 int verifySignature(char* publicKey, char* plainText, char* signatureBase64) {
     RSA* publicRSA = createPublicRSA(publicKey);
     unsigned char* encMessage;
@@ -460,10 +460,9 @@ int verifySignature(char* publicKey, char* plainText, char* signatureBase64) {
     int result = RSAVerifySignature(publicRSA, encMessage, encMessageLength, plainText, strlen(plainText), &authentic);
     return result & authentic;
 }
-//ZTLS function
+//ExpressPQDelivery function
 int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
                               const unsigned char *context, size_t contextlen){
-
     struct timespec begin;
     clock_gettime(CLOCK_MONOTONIC, &begin);
     printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
@@ -496,13 +495,13 @@ int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
     if (pkey == NULL || EVP_PKEY_missing_parameters(pkey)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
-        //printf("error\n");
+        printf("error\n");
     }
     //PEM_write_PUBKEY(stdout, pkey);
     SSL* ssl = SSL_CONNECTION_GET_SSL(s);
     if ((clu = ssl_cert_lookup_by_pkey(pkey, &certidx, ssl->ctx)) == NULL) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-        //printf("error2\n");
+        printf("error2\n");
     }
 
     /*
@@ -522,7 +521,7 @@ int early_process_cert_verify(SSL_CONNECTION *s, unsigned char *out,
     pkey = X509_get0_pubkey(peer);
     if (pkey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        //printf("error3\n");
+        printf("error3\n");
     }
     outbio  = BIO_new(BIO_s_mem());
     PEM_write_bio_PUBKEY( outbio, pkey );

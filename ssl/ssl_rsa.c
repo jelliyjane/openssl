@@ -47,7 +47,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
         return 0;
     }
     //if(sc->early_data_state == SSL_DNS_CCS){
-        printf("load the Server's Certificate \n");
+        //printf("load the Server's Certificate \n");
         //PEM_write_X509(stdout, x);
         struct timespec begin;
         clock_gettime(CLOCK_MONOTONIC, &begin);
@@ -70,15 +70,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
             SSLfatal(SSL_CONNECTION_GET_SSL(sc), SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
         }
        // printf("sc->session->peer_chain is null: %d\n", sc->session->peer_chain == NULL);
-        if (ssl_verify_cert_chain(sc, sc->session->peer_chain) <= 0) {
-            printf("not correct cert chain ");
-            clock_gettime(CLOCK_MONOTONIC, &begin);
-            printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
-        }else
-            printf("authenticate cert chain");
-            clock_gettime(CLOCK_MONOTONIC, &begin);
-            printf(": %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);
-
+        
     //}
 
     return ssl_set_cert(sc->cert, x, SSL_CONNECTION_GET_CTX(sc));
