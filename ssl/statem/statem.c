@@ -1110,6 +1110,8 @@ static SUB_STATE_RETURN read_state_machine_reduce(SSL_CONNECTION *s) {
                 printf("           before process message: %s\n",SSL_state_string_long(s));
                 ret = process_message(s, &pkt);
                 printf("ret: %d\n", ret);
+                printf("st->hand_state: %d\n", st->hand_state);
+                cb(ssl, TLS_ST_CW_CLNT_HELLO_END, 1);
 
                 /* Discard the packet data */
                 s->init_num = 0;
@@ -1508,6 +1510,7 @@ static SUB_STATE_RETURN write_state_machine_reduce(SSL_CONNECTION *s) {
                 /* Fall through */
 
             case WRITE_STATE_SEND: 
+                cb(ssl, TLS_ST_CW_CLNT_HELLO_END, 1);
                 clock_gettime(CLOCK_MONOTONIC, &begin);
                 printf("   (WRITE) hand_state -> %s", SSL_state_string_long(ssl));
                 printf(" : %f\n",(begin.tv_sec) + (begin.tv_nsec) / 1000000000.0);

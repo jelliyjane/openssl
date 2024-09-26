@@ -244,7 +244,9 @@ int ossl_statem_client_read_transition(SSL_CONNECTION *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
     int ske_expected;
-
+    /*if(st->hand_state == TLS_ST_CR_CERT_VRFY){
+        printf("\nst->hand_state == TLS_ST_CR_CERT_VRFY\n\n");
+    }*/
     /*
      * Note that after writing the first ClientHello we don't know what version
      * we are going to negotiate yet, so we don't take this branch until later.
@@ -788,6 +790,7 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_CLNT_HELLO:
+        //printf("case TLS_ST_CW_CLNT_HELLO: s->early_data_state: %d\n\n",s->early_data_state);
         if (s->early_data_state == SSL_EARLY_DATA_CONNECTING) {
             /*
              * We are assuming this is a TLSv1.3 connection, although we haven't
@@ -797,8 +800,12 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL_CONNECTION *s)
                 st->hand_state = TLS_ST_CW_CHANGE;
             else
                 st->hand_state = TLS_ST_EARLY_DATA;
+            
+            printf("case TLS_ST_CW_CLNT_HELLO: st->hand_state: %d\n\n",st->hand_state);
             return WRITE_TRAN_CONTINUE;
         }
+        //st->hand_state = TLS_ST_CW_CLNT_HELLO_END;
+        //st->hand_state = TLS_ST_CW_CLNT_HELLO;
         /*
          * No transition at the end of writing because we don't know what
          * we will be sent
@@ -955,6 +962,7 @@ WRITE_TRAN ossl_statem_client_write_transition_reduce(SSL_CONNECTION *s) {
             return WRITE_TRAN_CONTINUE;
 
         case TLS_ST_CW_CLNT_HELLO:
+            //printf("case TLS_ST_CW_CLNT_HELLO: s->early_data_state: %d\n\n",s->early_data_state);
             if (s->early_data_state == SSL_EARLY_DATA_CONNECTING) {
                 /*
                  * We are assuming this is a TLSv1.3 connection, although we haven't
